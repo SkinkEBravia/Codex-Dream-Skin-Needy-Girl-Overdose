@@ -96,13 +96,28 @@ session-switch performance. No speedup percentage is claimed by this audit.
 
 ## Cleanup boundaries and suggested sequence
 
-1. Start with the small confirmed C1/C3/C4 cleanups and compatible C2 definitions.
-2. Profile P1/P2 before changing refresh ownership or compatibility fallbacks.
-3. Consolidate shared helpers and inventory contracts in separate reviewable
-   changes. The Windows base renderer/CSS remain separately maintained; shared
-   extension changes propagate through the existing asset sync tool.
-4. Benchmark P3/P4 and any minification/compile-cache experiment against the
-   committed baseline.
+The sequence was revised after reviewing
+[fork issue #1](https://github.com/SkinkEBravia/Codex-Dream-Skin-Needy-Girl-Overdose/issues/1).
+See the [measurement-first cleanup and enhancement plan](cleanup-enhancement-plan-2026-10-09.md)
+for scenario definitions, exact baselines, export boundaries and acceptance
+criteria. The findings above remain a record of the original audited source.
+
+1. Freeze the pre-clean baseline and build a reproducible benchmark before
+   applying cleanup. Separate first-letter latency, steady typing, IME,
+   session switching, scrolling, theme changes and startup.
+2. Apply small confirmed C1/C3/C4 cleanups and compatible C2 definitions.
+   Check functional behavior and before/after measurements without promising
+   a speedup from removing small redundant statements.
+3. Use measured evidence to prioritize P1 scheduling/scans, P2 selector work,
+   and active paint costs. Change one mechanism per experiment and retain
+   negative results.
+4. Evaluate P3/P4, constructed stylesheets and compilation preparation against
+   their actual startup/rebuild or interaction costs. Consolidate C5/C6
+   helpers and inventories separately. The Windows base renderer/CSS remain
+   separately maintained; shared extension changes propagate through sync.
+5. Confirm native app results, then publish only sanitized valid aggregates.
+   Passing fixture timing or local tests alone does not establish native
+   cross-platform performance or hosted CI success.
 
 Preserve generated platform assets, independent validation/security boundaries,
 Safe CSS contracts, literal-safe template substitution, content hashes,
