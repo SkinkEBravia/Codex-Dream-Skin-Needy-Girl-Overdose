@@ -36,6 +36,8 @@
     '[data-app-action-review-scroll]',
     '[data-review-path]',
     '[data-app-action-review-file-toggle]',
+    '[class~="@container/review-header"]',
+    '[class~="@container/review-header"] button',
     `:is(${selectors.sidebar})`,
     `:is(${selectors.sidebar}) :is(button, [role="button"])`,
     selectors.paletteScroll,
@@ -530,6 +532,12 @@
       mark(scroll, "review-scroll");
       for (const file of scroll.querySelectorAll?.('[data-review-path]') || []) {
         mark(file, "review-file");
+      }
+      for (const group of panel.querySelectorAll?.('[class~="@container/review-header"] [role="group"]') || []) {
+        mark(group, "review-toolbar-group");
+        for (const button of group.querySelectorAll?.("button") || []) {
+          mark(button, "review-toolbar-button");
+        }
       }
     }
     const candidates = [...document.querySelectorAll(selectors.workspace)].filter((candidate) => {

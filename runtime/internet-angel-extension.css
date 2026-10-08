@@ -462,6 +462,24 @@ html[data-dream-skin="active"][data-dream-theme="internet-angel"] [data-angel-co
   background: color-mix(in oklab, var(--angel-surface) 68%, transparent) !important;
 }
 
+/* Native capsule paint uses a background image and backdrop blur. Keep its
+   geometry and interaction states; replace only paint within review headers. */
+html[data-dream-skin="active"][data-dream-theme="internet-angel"] [data-angel-component="review-toolbar-group"] {
+  color: var(--angel-paper) !important;
+  background: linear-gradient(135deg, rgb(49 32 103 / .98), rgb(25 24 78 / .98)) !important;
+  box-shadow: inset 0 0 0 1px rgb(99 244 255 / .48), inset 0 -2px rgb(255 69 200 / .55) !important;
+  backdrop-filter: none !important;
+}
+
+html[data-dream-skin="active"][data-dream-theme="internet-angel"] [data-angel-component="review-toolbar-button"] {
+  background: transparent !important;
+  backdrop-filter: none !important;
+}
+
+html[data-dream-skin="active"][data-dream-theme="internet-angel"] [data-angel-component="review-toolbar-button"]:not(:disabled):not([aria-disabled="true"]):is(:hover, [data-state="open"], [aria-expanded="true"]) {
+  background: rgb(130 88 255 / .24) !important;
+}
+
 /* Add/slash palettes are renderer portals without role=menu. */
 html[data-dream-skin="active"][data-dream-theme="internet-angel"] [data-angel-component="composer-palette"],
 html[data-dream-skin="active"][data-dream-theme="internet-angel"] div[class~="border-token-border"][class*="bg-token-dropdown-background"][class~="relative"][class~="overflow-hidden"][class~="rounded-2xl"][class~="p-1"]:has(> .vertical-scroll-fade-mask[class~="overflow-y-auto"]) {

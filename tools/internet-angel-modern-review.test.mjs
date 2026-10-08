@@ -26,6 +26,15 @@ function card(id, modern, review = modern ? "查看变更" : "Review") {
 
 function reviewPanel(id) {
   return `<div role="tabpanel" id="${id}" class="review-panel">
+    <div class="@container/review-header" style="pointer-events:none">
+      <div role="group" class="native-capsule" style="pointer-events:auto;display:inline-flex;width:200px;height:40px">
+        <button aria-haspopup="menu" aria-expanded="false" class="native-control">上一轮</button>
+        <span class="text-codex-git-added">+99</span><span class="text-codex-git-deleted">-11</span>
+      </div>
+      <div role="group" class="native-capsule" style="pointer-events:auto;display:inline-flex;width:120px;height:40px">
+        <button aria-label="More" class="native-control">…</button><button disabled class="native-control">Folder</button>
+      </div>
+    </div>
     <div data-app-action-review-scroll class="electron:bg-surface" style="overflow-y:auto;height:300px">
       <div data-review-path="sample.js"><div class="sticky" style="position:sticky;top:0">
         <button data-app-action-review-file-toggle data-app-action-review-file-expanded="false" aria-expanded="false">sample.js</button>
@@ -42,7 +51,7 @@ async function launch() {
   });
 }
 
-async function setup(browser, content) {
+async function setup(browser, content, beforeSkin) {
   const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
   await page.setContent(`<html data-dream-skin="active" data-dream-theme="internet-angel"><head><style>
     html { --dream-text:#eee;--dream-text-muted:#bbb;--dream-surface:#19184e;--dream-surface-raised:#312074;--dream-line-soft:#45567a;--dream-accent:#63f4ff; }
@@ -51,11 +60,66 @@ async function setup(browser, content) {
     .text-codex-git-added,.git-decoration-added { color:rgb(30,200,80); }
     .text-codex-git-deleted,.git-decoration-deleted { color:rgb(240,60,60); }
     button:disabled {opacity:.4;pointer-events:none;}
+    .native-capsule {background:linear-gradient(rgb(45,45,45),rgb(45,45,45));backdrop-filter:blur(24px);}
+    .native-control {width:60px;height:36px;backdrop-filter:blur(24px);}
+    .native-control:focus-visible {outline:2px solid rgb(99,244,255);outline-offset:2px;}
   </style></head><body>${content}</body></html>`);
+  await beforeSkin?.(page);
   await page.addStyleTag({ content: css });
   await page.addScriptTag({ content: script });
   return page;
 }
+
+test("review toolbar replaces native capsule paint without changing layout, menus, focus or counts", browserOptions, async () => {
+  const browser = await launch();
+  try {
+    let before;
+    const measure = () => [...document.querySelectorAll('#toolbar .native-capsule,#toolbar .native-control')].map(node => {
+      const box = node.getBoundingClientRect();
+      return { width: box.width, height: box.height, pointer: getComputedStyle(node).pointerEvents };
+    });
+    const page = await setup(browser, reviewPanel("toolbar") + '<div role="group" id="unrelated" class="native-capsule">Unrelated toolbar</div>',
+      async page => { before = await page.evaluate(measure); });
+    assert.deepEqual(await page.evaluate(measure), before);
+    for (const light of [false, true]) {
+      const result = await page.evaluate(light => {
+        document.documentElement.classList.toggle("dream-theme-light", light);
+        const groups = [...document.querySelectorAll('[data-angel-component="review-toolbar-group"]')];
+        return {
+          groups: groups.map(node => ({ image: getComputedStyle(node).backgroundImage, blur: getComputedStyle(node).backdropFilter })),
+          buttonBlur: [...document.querySelectorAll('[data-angel-component="review-toolbar-button"]')].map(node => getComputedStyle(node).backdropFilter),
+          counts: [...document.querySelectorAll('#toolbar .text-codex-git-added,#toolbar .text-codex-git-deleted')].map(node => getComputedStyle(node).color),
+          disabled: getComputedStyle(document.querySelector('#toolbar button:disabled')).opacity,
+          unrelated: document.getElementById('unrelated').dataset.angelComponent,
+          unrelatedBlur: getComputedStyle(document.getElementById('unrelated')).backdropFilter,
+        };
+      }, light);
+      assert.equal(result.groups.length, 2);
+      for (const group of result.groups) {
+        assert.match(group.image, /linear-gradient.*49, 32, 103/);
+        assert.equal(group.blur, "none");
+      }
+      assert.deepEqual(result.buttonBlur, ["none", "none", "none"]);
+      assert.deepEqual(result.counts, ["rgb(30, 200, 80)", "rgb(240, 60, 60)", "rgb(30, 200, 80)", "rgb(240, 60, 60)"]);
+      assert.equal(result.disabled, "0.4");
+      assert.equal(result.unrelated, undefined);
+      assert.equal(result.unrelatedBlur, "blur(24px)");
+    }
+    await page.evaluate(() => {
+      const button = document.querySelector('#toolbar [aria-haspopup="menu"]');
+      button.addEventListener('click', () => button.setAttribute('aria-expanded', 'true'));
+    });
+    const trigger = page.locator('#toolbar [aria-haspopup="menu"]');
+    await trigger.focus();
+    assert.equal(await trigger.evaluate(node => getComputedStyle(node).outlineStyle), "solid");
+    await trigger.click();
+    assert.equal(await trigger.getAttribute('aria-expanded'), "true");
+    assert.equal(await trigger.getAttribute('aria-haspopup'), "menu");
+    await page.evaluate(() => window.__CODEX_INTERNET_ANGEL_EXTENSION_STATE__.cleanup());
+    assert.equal(await page.locator('[data-angel-component]').count(), 0);
+    assert.equal(await page.locator('#toolbar .native-capsule').first().evaluate(node => getComputedStyle(node).backdropFilter), "blur(24px)");
+  } finally { await browser.close(); }
+});
 
 test("modern and legacy edited cards theme their file rows and preserve native colors and controls", browserOptions, async () => {
   const browser = await launch();
