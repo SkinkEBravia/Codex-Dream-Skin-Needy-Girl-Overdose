@@ -9,8 +9,10 @@ This plan incorporates [fork issue #1](https://github.com/SkinkEBravia/Codex-Dre
 reviewed on 2026-10-09 with no comments, and the
 [pre-cleanup audit](pre-clean-audit-2026-10-09.md). It supersedes the audit's
 original cleanup-first sequence without changing its historical findings.
-The harness, cleanup, experiments, and benchmark results described below have
-not been implemented by this planning change.
+The full scenario harness, cleanup and enhancement experiments described below
+have not been implemented. The [Phase 0 checkpoint](phase0-baseline-2026-10-09.md)
+now freezes source/workload identities and records a limited synthetic
+classifier variability run. Native interaction comparisons remain pending.
 
 ## What the issue changes
 
@@ -65,6 +67,12 @@ event, rather than discarding it as warmup.
 Exit condition: repeatable scenario definitions, exact variant identities,
 stable trial conditions, and a measured variability range. Historical manual
 traces remain supporting evidence, not substitutes for controlled paired runs.
+
+Current checkpoint: source variants and the existing long-chat classifier
+fixture are locked, two warmup pairs and ten alternating measured pairs were
+recorded, and native environment metadata was observed without changing the
+installed skin. See the Phase 0 document for exact scope and results. Its
+classifier timing does not satisfy Phase 1's interaction measurement gates.
 
 ## Phase 1 — Build measurement before changing runtime behavior
 

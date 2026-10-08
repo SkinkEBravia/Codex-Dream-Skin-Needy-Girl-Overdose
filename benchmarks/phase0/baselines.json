@@ -1,0 +1,522 @@
+{
+  "schema": "dream-skin-performance-baselines/1",
+  "auditedDate": "2026-10-09",
+  "documentationCheckpoint": "284bff69ae193b457d30adb3ea84d3f88629681c",
+  "stockControl": {
+    "id": "stock-cdp",
+    "sourceCommit": null,
+    "requirements": [
+      "same-official-app-build",
+      "verified-loopback-cdp",
+      "no-skin-payload",
+      "no-skin-watcher"
+    ],
+    "measured": false
+  },
+  "candidate": null,
+  "variants": [
+    {
+      "id": "original-skin",
+      "commit": "10acfa0a29d9c44e91a53bdc6bebaa42e7adf955",
+      "tree": "ec37e3a6b333c7c2ef9d1ea96b03bf71b5995080",
+      "runtimeVersion": "1.5.20",
+      "predicateCachePresent": false,
+      "assets": [
+        {
+          "file": "runtime/renderer-inject.js",
+          "bytes": 54705,
+          "sha256": "7a6ac9b7af104d77762c7d8cfa2cb7db2cb102ec7a7ca4111a39538d892d2d42"
+        },
+        {
+          "file": "runtime/dream-skin.css",
+          "bytes": 117343,
+          "sha256": "ab10771916955f90a632d56de653cd3c68eb27d7491783a55592c9af4342546a"
+        },
+        {
+          "file": "runtime/internet-angel-extension.js",
+          "bytes": 42566,
+          "sha256": "e133d077240960757a21621bf3ccb0b28e86c51b00fed517be7fd1e0d3ed315b"
+        },
+        {
+          "file": "runtime/internet-angel-extension.css",
+          "bytes": 93628,
+          "sha256": "3e39088d109caa76e208e394421f3312e83e34b4b1f400a982df2bfe1866b85d"
+        },
+        {
+          "file": "tools/selectors.json",
+          "bytes": 14106,
+          "sha256": "f48fb6833e3bb2abedd7e2bfe11976db227c67be58d989857ea86c8f77af6bf2"
+        },
+        {
+          "file": "windows/assets/renderer-inject.js",
+          "bytes": 127716,
+          "sha256": "8e8d655d782423768862317253f50d2478f359bac4fc9e9d49f1f5047b2b10d8"
+        },
+        {
+          "file": "windows/assets/dream-skin.css",
+          "bytes": 274097,
+          "sha256": "d6684879fe2293b758c433bafc66951d6b92c0e5b6d5df61877082581a0ef404"
+        },
+        {
+          "file": "windows/assets/internet-angel-extension.js",
+          "bytes": 42566,
+          "sha256": "e133d077240960757a21621bf3ccb0b28e86c51b00fed517be7fd1e0d3ed315b"
+        },
+        {
+          "file": "windows/assets/internet-angel-extension.css",
+          "bytes": 93628,
+          "sha256": "3e39088d109caa76e208e394421f3312e83e34b4b1f400a982df2bfe1866b85d"
+        },
+        {
+          "file": "windows/assets/selectors.json",
+          "bytes": 14106,
+          "sha256": "f48fb6833e3bb2abedd7e2bfe11976db227c67be58d989857ea86c8f77af6bf2"
+        },
+        {
+          "file": "windows/assets/theme.json",
+          "bytes": 592,
+          "sha256": "e7f18ca3e535da6e5e4a9c81c48aef3d2e2f7c58eb3d0c4fd4c4b09ed2b96384"
+        },
+        {
+          "file": "windows/scripts/injector.mjs",
+          "bytes": 93086,
+          "sha256": "414b8648cbd9b09fce698026813ff6d203de2b08ed7774a58bedf5083197467b"
+        },
+        {
+          "file": "macos/assets/renderer-inject.js",
+          "bytes": 58101,
+          "sha256": "938d56f32c03ed22135e5cebbfa28f00b88005748805146318e1fc20e95e40b9"
+        },
+        {
+          "file": "macos/assets/dream-skin.css",
+          "bytes": 125803,
+          "sha256": "fe21d16d9cd609028d671c774feee3d3fdac200058353f9e67587dd0c6ae4323"
+        },
+        {
+          "file": "macos/assets/internet-angel-extension.js",
+          "bytes": 42566,
+          "sha256": "e133d077240960757a21621bf3ccb0b28e86c51b00fed517be7fd1e0d3ed315b"
+        },
+        {
+          "file": "macos/assets/internet-angel-extension.css",
+          "bytes": 93628,
+          "sha256": "3e39088d109caa76e208e394421f3312e83e34b4b1f400a982df2bfe1866b85d"
+        },
+        {
+          "file": "macos/assets/selectors.json",
+          "bytes": 14106,
+          "sha256": "f48fb6833e3bb2abedd7e2bfe11976db227c67be58d989857ea86c8f77af6bf2"
+        },
+        {
+          "file": "macos/assets/theme.json",
+          "bytes": 791,
+          "sha256": "fcce3f314500be1a58381ffe7f9a6b212912d54ff9a0e7d17b6664c1516f750e"
+        },
+        {
+          "file": "macos/scripts/injector.mjs",
+          "bytes": 109668,
+          "sha256": "864a7913e8cb97b918e737963812ddd121decfa41f015133342d75a1d4a340bd"
+        },
+        {
+          "file": "linux/assets/renderer-inject.js",
+          "bytes": 93209,
+          "sha256": "91a172dece9b39ec0ac75c2aac736b757d6938ccc8b6d8d2caf2fa0af4e2be21"
+        },
+        {
+          "file": "linux/assets/dream-skin.css",
+          "bytes": 255264,
+          "sha256": "fc8c3f8eee22901dc2bc53febdacaa276f9e374e523fb3404726236127123999"
+        },
+        {
+          "file": "linux/assets/internet-angel-extension.js",
+          "bytes": 42566,
+          "sha256": "e133d077240960757a21621bf3ccb0b28e86c51b00fed517be7fd1e0d3ed315b"
+        },
+        {
+          "file": "linux/assets/internet-angel-extension.css",
+          "bytes": 93628,
+          "sha256": "3e39088d109caa76e208e394421f3312e83e34b4b1f400a982df2bfe1866b85d"
+        },
+        {
+          "file": "linux/assets/selectors.json",
+          "bytes": 14106,
+          "sha256": "f48fb6833e3bb2abedd7e2bfe11976db227c67be58d989857ea86c8f77af6bf2"
+        },
+        {
+          "file": "linux/assets/theme.json",
+          "bytes": 621,
+          "sha256": "6dba28b194a8977d5e19c4ca47dbb016f32930e48b2b604c9c2ff77f79da6b7b"
+        },
+        {
+          "file": "linux/scripts/injector.mjs",
+          "bytes": 86339,
+          "sha256": "aa8e5a9560789093990a3426644e89ab3c37d9ceeec7be5d8f0d2b191f3ed832"
+        },
+        {
+          "file": "windows/assets/internet-angel-acrylic.css",
+          "bytes": 18273,
+          "sha256": "6ea7d70bd2f5dbda33d96e1cba0978aee5ee2e57ffdd8131ca4388d979cb4f8a"
+        },
+        {
+          "file": "windows/assets/dream-reference.jpg",
+          "bytes": 1174918,
+          "sha256": "4858200d0c5714091d3d15cfa6a07f237b543e1c07d02c599be3fc11353b72c3"
+        }
+      ]
+    },
+    {
+      "id": "performance-only",
+      "commit": "265841ba46d1254a7bce205d0f16bcaade1aea3b",
+      "tree": "843956c2f0819a91e4da554c690ecd50c27e6601",
+      "runtimeVersion": "1.5.20",
+      "predicateCachePresent": true,
+      "assets": [
+        {
+          "file": "runtime/renderer-inject.js",
+          "bytes": 55246,
+          "sha256": "883dc693fbd849755ae898140f2149ec84e16221065ef596e8eb16ca391571f3"
+        },
+        {
+          "file": "runtime/dream-skin.css",
+          "bytes": 117343,
+          "sha256": "ab10771916955f90a632d56de653cd3c68eb27d7491783a55592c9af4342546a"
+        },
+        {
+          "file": "runtime/internet-angel-extension.js",
+          "bytes": 43379,
+          "sha256": "7ef53695046fafec62dd16eeccd6e803c70d79227164842d66a9de5262723ec6"
+        },
+        {
+          "file": "runtime/internet-angel-extension.css",
+          "bytes": 94068,
+          "sha256": "7752fe00679b2efabe0a2813151825494b643a55dd5eedcdb2b665869a4bac7f"
+        },
+        {
+          "file": "tools/selectors.json",
+          "bytes": 14106,
+          "sha256": "f48fb6833e3bb2abedd7e2bfe11976db227c67be58d989857ea86c8f77af6bf2"
+        },
+        {
+          "file": "windows/assets/renderer-inject.js",
+          "bytes": 128839,
+          "sha256": "18e025bd42b0d46bcfbbf85aabb8e4e9fd5e61435416f263494b980d2cba3eb5"
+        },
+        {
+          "file": "windows/assets/dream-skin.css",
+          "bytes": 274097,
+          "sha256": "d6684879fe2293b758c433bafc66951d6b92c0e5b6d5df61877082581a0ef404"
+        },
+        {
+          "file": "windows/assets/internet-angel-extension.js",
+          "bytes": 43379,
+          "sha256": "7ef53695046fafec62dd16eeccd6e803c70d79227164842d66a9de5262723ec6"
+        },
+        {
+          "file": "windows/assets/internet-angel-extension.css",
+          "bytes": 94068,
+          "sha256": "7752fe00679b2efabe0a2813151825494b643a55dd5eedcdb2b665869a4bac7f"
+        },
+        {
+          "file": "windows/assets/selectors.json",
+          "bytes": 14106,
+          "sha256": "f48fb6833e3bb2abedd7e2bfe11976db227c67be58d989857ea86c8f77af6bf2"
+        },
+        {
+          "file": "windows/assets/theme.json",
+          "bytes": 592,
+          "sha256": "e7f18ca3e535da6e5e4a9c81c48aef3d2e2f7c58eb3d0c4fd4c4b09ed2b96384"
+        },
+        {
+          "file": "windows/scripts/injector.mjs",
+          "bytes": 93882,
+          "sha256": "168179fc0be9fde8337a75bb7d16664b13d1497f9aac34c52cb9815bb7e9dadb"
+        },
+        {
+          "file": "macos/assets/renderer-inject.js",
+          "bytes": 60224,
+          "sha256": "a770fe05219666a5561ed030b15e791c30b0308f2edf476461e2aac32524bd5e"
+        },
+        {
+          "file": "macos/assets/dream-skin.css",
+          "bytes": 125803,
+          "sha256": "fe21d16d9cd609028d671c774feee3d3fdac200058353f9e67587dd0c6ae4323"
+        },
+        {
+          "file": "macos/assets/internet-angel-extension.js",
+          "bytes": 43379,
+          "sha256": "7ef53695046fafec62dd16eeccd6e803c70d79227164842d66a9de5262723ec6"
+        },
+        {
+          "file": "macos/assets/internet-angel-extension.css",
+          "bytes": 94068,
+          "sha256": "7752fe00679b2efabe0a2813151825494b643a55dd5eedcdb2b665869a4bac7f"
+        },
+        {
+          "file": "macos/assets/selectors.json",
+          "bytes": 14106,
+          "sha256": "f48fb6833e3bb2abedd7e2bfe11976db227c67be58d989857ea86c8f77af6bf2"
+        },
+        {
+          "file": "macos/assets/theme.json",
+          "bytes": 791,
+          "sha256": "fcce3f314500be1a58381ffe7f9a6b212912d54ff9a0e7d17b6664c1516f750e"
+        },
+        {
+          "file": "macos/scripts/injector.mjs",
+          "bytes": 109971,
+          "sha256": "2c3d30c3c38ab1744d5a74c9a15a18a310437708a4878542222d58d0291b5078"
+        },
+        {
+          "file": "linux/assets/renderer-inject.js",
+          "bytes": 93209,
+          "sha256": "91a172dece9b39ec0ac75c2aac736b757d6938ccc8b6d8d2caf2fa0af4e2be21"
+        },
+        {
+          "file": "linux/assets/dream-skin.css",
+          "bytes": 255264,
+          "sha256": "fc8c3f8eee22901dc2bc53febdacaa276f9e374e523fb3404726236127123999"
+        },
+        {
+          "file": "linux/assets/internet-angel-extension.js",
+          "bytes": 43379,
+          "sha256": "7ef53695046fafec62dd16eeccd6e803c70d79227164842d66a9de5262723ec6"
+        },
+        {
+          "file": "linux/assets/internet-angel-extension.css",
+          "bytes": 94068,
+          "sha256": "7752fe00679b2efabe0a2813151825494b643a55dd5eedcdb2b665869a4bac7f"
+        },
+        {
+          "file": "linux/assets/selectors.json",
+          "bytes": 14106,
+          "sha256": "f48fb6833e3bb2abedd7e2bfe11976db227c67be58d989857ea86c8f77af6bf2"
+        },
+        {
+          "file": "linux/assets/theme.json",
+          "bytes": 621,
+          "sha256": "6dba28b194a8977d5e19c4ca47dbb016f32930e48b2b604c9c2ff77f79da6b7b"
+        },
+        {
+          "file": "linux/scripts/injector.mjs",
+          "bytes": 86339,
+          "sha256": "aa8e5a9560789093990a3426644e89ab3c37d9ceeec7be5d8f0d2b191f3ed832"
+        },
+        {
+          "file": "windows/assets/internet-angel-acrylic.css",
+          "bytes": 18273,
+          "sha256": "6ea7d70bd2f5dbda33d96e1cba0978aee5ee2e57ffdd8131ca4388d979cb4f8a"
+        },
+        {
+          "file": "windows/assets/dream-reference.jpg",
+          "bytes": 1174918,
+          "sha256": "4858200d0c5714091d3d15cfa6a07f237b543e1c07d02c599be3fc11353b72c3"
+        },
+        {
+          "file": "tools/css-predicate-cache.mjs",
+          "bytes": 10427,
+          "sha256": "6132495a374f8ffb2466722ab5806db45c65bc4ea1f4c53414132db64643a4ec"
+        },
+        {
+          "file": "windows/assets/css-predicate-cache.mjs",
+          "bytes": 10427,
+          "sha256": "6132495a374f8ffb2466722ab5806db45c65bc4ea1f4c53414132db64643a4ec"
+        },
+        {
+          "file": "macos/assets/css-predicate-cache.mjs",
+          "bytes": 10427,
+          "sha256": "6132495a374f8ffb2466722ab5806db45c65bc4ea1f4c53414132db64643a4ec"
+        },
+        {
+          "file": "linux/assets/css-predicate-cache.mjs",
+          "bytes": 10427,
+          "sha256": "6132495a374f8ffb2466722ab5806db45c65bc4ea1f4c53414132db64643a4ec"
+        }
+      ]
+    },
+    {
+      "id": "pre-clean",
+      "commit": "ac0cc83415deef4df7dbc77cd31be3e4abf7391f",
+      "tree": "bb9f0ea8b71e4790de2801bb5685c211e68de9e4",
+      "runtimeVersion": "1.5.20",
+      "predicateCachePresent": true,
+      "assets": [
+        {
+          "file": "runtime/renderer-inject.js",
+          "bytes": 55246,
+          "sha256": "883dc693fbd849755ae898140f2149ec84e16221065ef596e8eb16ca391571f3"
+        },
+        {
+          "file": "runtime/dream-skin.css",
+          "bytes": 117343,
+          "sha256": "ab10771916955f90a632d56de653cd3c68eb27d7491783a55592c9af4342546a"
+        },
+        {
+          "file": "runtime/internet-angel-extension.js",
+          "bytes": 45802,
+          "sha256": "3e30300a24728426d4a45323c1000deec67411fe5889ee644669ddfecd900927"
+        },
+        {
+          "file": "runtime/internet-angel-extension.css",
+          "bytes": 96383,
+          "sha256": "1a69e752283c2ade7880326c4a0b845786efa53630b31e5afc6def40b4ea4fa5"
+        },
+        {
+          "file": "tools/selectors.json",
+          "bytes": 14106,
+          "sha256": "f48fb6833e3bb2abedd7e2bfe11976db227c67be58d989857ea86c8f77af6bf2"
+        },
+        {
+          "file": "windows/assets/renderer-inject.js",
+          "bytes": 128839,
+          "sha256": "18e025bd42b0d46bcfbbf85aabb8e4e9fd5e61435416f263494b980d2cba3eb5"
+        },
+        {
+          "file": "windows/assets/dream-skin.css",
+          "bytes": 274097,
+          "sha256": "d6684879fe2293b758c433bafc66951d6b92c0e5b6d5df61877082581a0ef404"
+        },
+        {
+          "file": "windows/assets/internet-angel-extension.js",
+          "bytes": 45802,
+          "sha256": "3e30300a24728426d4a45323c1000deec67411fe5889ee644669ddfecd900927"
+        },
+        {
+          "file": "windows/assets/internet-angel-extension.css",
+          "bytes": 96383,
+          "sha256": "1a69e752283c2ade7880326c4a0b845786efa53630b31e5afc6def40b4ea4fa5"
+        },
+        {
+          "file": "windows/assets/selectors.json",
+          "bytes": 14106,
+          "sha256": "f48fb6833e3bb2abedd7e2bfe11976db227c67be58d989857ea86c8f77af6bf2"
+        },
+        {
+          "file": "windows/assets/theme.json",
+          "bytes": 592,
+          "sha256": "e7f18ca3e535da6e5e4a9c81c48aef3d2e2f7c58eb3d0c4fd4c4b09ed2b96384"
+        },
+        {
+          "file": "windows/scripts/injector.mjs",
+          "bytes": 93882,
+          "sha256": "168179fc0be9fde8337a75bb7d16664b13d1497f9aac34c52cb9815bb7e9dadb"
+        },
+        {
+          "file": "macos/assets/renderer-inject.js",
+          "bytes": 60224,
+          "sha256": "a770fe05219666a5561ed030b15e791c30b0308f2edf476461e2aac32524bd5e"
+        },
+        {
+          "file": "macos/assets/dream-skin.css",
+          "bytes": 125803,
+          "sha256": "fe21d16d9cd609028d671c774feee3d3fdac200058353f9e67587dd0c6ae4323"
+        },
+        {
+          "file": "macos/assets/internet-angel-extension.js",
+          "bytes": 45802,
+          "sha256": "3e30300a24728426d4a45323c1000deec67411fe5889ee644669ddfecd900927"
+        },
+        {
+          "file": "macos/assets/internet-angel-extension.css",
+          "bytes": 96383,
+          "sha256": "1a69e752283c2ade7880326c4a0b845786efa53630b31e5afc6def40b4ea4fa5"
+        },
+        {
+          "file": "macos/assets/selectors.json",
+          "bytes": 14106,
+          "sha256": "f48fb6833e3bb2abedd7e2bfe11976db227c67be58d989857ea86c8f77af6bf2"
+        },
+        {
+          "file": "macos/assets/theme.json",
+          "bytes": 791,
+          "sha256": "fcce3f314500be1a58381ffe7f9a6b212912d54ff9a0e7d17b6664c1516f750e"
+        },
+        {
+          "file": "macos/scripts/injector.mjs",
+          "bytes": 109971,
+          "sha256": "2c3d30c3c38ab1744d5a74c9a15a18a310437708a4878542222d58d0291b5078"
+        },
+        {
+          "file": "linux/assets/renderer-inject.js",
+          "bytes": 93209,
+          "sha256": "91a172dece9b39ec0ac75c2aac736b757d6938ccc8b6d8d2caf2fa0af4e2be21"
+        },
+        {
+          "file": "linux/assets/dream-skin.css",
+          "bytes": 255264,
+          "sha256": "fc8c3f8eee22901dc2bc53febdacaa276f9e374e523fb3404726236127123999"
+        },
+        {
+          "file": "linux/assets/internet-angel-extension.js",
+          "bytes": 45802,
+          "sha256": "3e30300a24728426d4a45323c1000deec67411fe5889ee644669ddfecd900927"
+        },
+        {
+          "file": "linux/assets/internet-angel-extension.css",
+          "bytes": 96383,
+          "sha256": "1a69e752283c2ade7880326c4a0b845786efa53630b31e5afc6def40b4ea4fa5"
+        },
+        {
+          "file": "linux/assets/selectors.json",
+          "bytes": 14106,
+          "sha256": "f48fb6833e3bb2abedd7e2bfe11976db227c67be58d989857ea86c8f77af6bf2"
+        },
+        {
+          "file": "linux/assets/theme.json",
+          "bytes": 621,
+          "sha256": "6dba28b194a8977d5e19c4ca47dbb016f32930e48b2b604c9c2ff77f79da6b7b"
+        },
+        {
+          "file": "linux/scripts/injector.mjs",
+          "bytes": 86339,
+          "sha256": "aa8e5a9560789093990a3426644e89ab3c37d9ceeec7be5d8f0d2b191f3ed832"
+        },
+        {
+          "file": "windows/assets/internet-angel-acrylic.css",
+          "bytes": 18273,
+          "sha256": "6ea7d70bd2f5dbda33d96e1cba0978aee5ee2e57ffdd8131ca4388d979cb4f8a"
+        },
+        {
+          "file": "windows/assets/dream-reference.jpg",
+          "bytes": 1174918,
+          "sha256": "4858200d0c5714091d3d15cfa6a07f237b543e1c07d02c599be3fc11353b72c3"
+        },
+        {
+          "file": "tools/css-predicate-cache.mjs",
+          "bytes": 10427,
+          "sha256": "6132495a374f8ffb2466722ab5806db45c65bc4ea1f4c53414132db64643a4ec"
+        },
+        {
+          "file": "windows/assets/css-predicate-cache.mjs",
+          "bytes": 10427,
+          "sha256": "6132495a374f8ffb2466722ab5806db45c65bc4ea1f4c53414132db64643a4ec"
+        },
+        {
+          "file": "macos/assets/css-predicate-cache.mjs",
+          "bytes": 10427,
+          "sha256": "6132495a374f8ffb2466722ab5806db45c65bc4ea1f4c53414132db64643a4ec"
+        },
+        {
+          "file": "linux/assets/css-predicate-cache.mjs",
+          "bytes": 10427,
+          "sha256": "6132495a374f8ffb2466722ab5806db45c65bc4ea1f4c53414132db64643a4ec"
+        }
+      ]
+    }
+  ],
+  "scenarioContract": {
+    "fixtureRevision": "long-chat-classifier/1",
+    "fixtureHtmlSha256": "334219777b52606c664419b594269fab4fa2d783359a6c5863afa8be0837d702",
+    "viewport": {
+      "width": 1200,
+      "height": 800
+    },
+    "messages": 160,
+    "nestedDepth": 40,
+    "textRepeats": 64,
+    "warmupPairs": 2,
+    "measuredPairs": 10,
+    "pairOrder": "alternating",
+    "timingScope": "uninstrumented-synchronous-component-classification",
+    "nativeInteractionBaseline": "pending-phase1"
+  }
+}

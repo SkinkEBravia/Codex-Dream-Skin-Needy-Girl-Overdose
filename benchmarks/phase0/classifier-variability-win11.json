@@ -1,0 +1,400 @@
+{
+  "schemaVersion": 1,
+  "scope": "isolated long-chat extension classifier refresh variability",
+  "limitations": [
+    "No editor or first-key latency measured",
+    "No CSS, GPU, native app, or stock-app measurements",
+    "Timings are informational; no performance pass/fail threshold",
+    "One browser process; paired observations are not independent machines",
+    "p95 uses linear interpolation over 10 observations; exploratory only, not a robust tail-latency estimate",
+    "refreshCount is null when production instrumentation is absent; null does not mean zero refreshes"
+  ],
+  "environment": {
+    "nodeVersion": "v24.17.0",
+    "platform": "win32",
+    "arch": "x64",
+    "browserVersion": "154.0.8037.98",
+    "headless": true,
+    "browserEngine": "Chromium"
+  },
+  "fixture": {
+    "origin": "tools/internet-angel-performance.test.mjs long-chat fixture",
+    "parameters": {
+      "viewport": {
+        "width": 1200,
+        "height": 800
+      },
+      "messages": 160,
+      "depth": 40,
+      "textRepeats": 64,
+      "warmupPairs": 2,
+      "measuredPairs": 10,
+      "refreshesPerSample": 1
+    },
+    "htmlSha256": "334219777b52606c664419b594269fab4fa2d783359a6c5863afa8be0837d702",
+    "textSha256": "dd9ea90e943c4094ccecc59bde5cf82d2d75bfad0f58641aa961a6f964e1b862",
+    "timing": "performance.now around one synchronous state.refresh after initial injection and two animation frames"
+  },
+  "sources": {
+    "original": {
+      "commit": "10acfa0a29d9c44e91a53bdc6bebaa42e7adf955",
+      "path": "runtime/internet-angel-extension.js",
+      "rawSha256": "e133d077240960757a21621bf3ccb0b28e86c51b00fed517be7fd1e0d3ed315b",
+      "injectedSha256": "018bd0524b577ff625761d3849aa938a6964e2fc4a65f6481c42418ec5fbf150"
+    },
+    "preclean": {
+      "commit": "ac0cc83415deef4df7dbc77cd31be3e4abf7391f",
+      "path": "runtime/internet-angel-extension.js",
+      "rawSha256": "3e30300a24728426d4a45323c1000deec67411fe5889ee644669ddfecd900927",
+      "injectedSha256": "ec2c5a3cff2df876171fd156620a5a15bbfd9107ddd3a3cc9db785c25e214db2"
+    }
+  },
+  "warmups": [
+    {
+      "index": 0,
+      "warmup": true,
+      "order": [
+        "original",
+        "preclean"
+      ],
+      "samples": [
+        {
+          "label": "original",
+          "durationMs": 25.700000017881393,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        },
+        {
+          "label": "preclean",
+          "durationMs": 8.5,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "warmup": true,
+      "order": [
+        "preclean",
+        "original"
+      ],
+      "samples": [
+        {
+          "label": "preclean",
+          "durationMs": 8.599999994039536,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        },
+        {
+          "label": "original",
+          "durationMs": 26.599999994039536,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        }
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "index": 0,
+      "warmup": false,
+      "order": [
+        "original",
+        "preclean"
+      ],
+      "samples": [
+        {
+          "label": "original",
+          "durationMs": 26.700000017881393,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        },
+        {
+          "label": "preclean",
+          "durationMs": 8.199999988079071,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "warmup": false,
+      "order": [
+        "preclean",
+        "original"
+      ],
+      "samples": [
+        {
+          "label": "preclean",
+          "durationMs": 8.400000005960464,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        },
+        {
+          "label": "original",
+          "durationMs": 26.200000017881393,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "warmup": false,
+      "order": [
+        "original",
+        "preclean"
+      ],
+      "samples": [
+        {
+          "label": "original",
+          "durationMs": 26.5,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        },
+        {
+          "label": "preclean",
+          "durationMs": 8.400000005960464,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "warmup": false,
+      "order": [
+        "preclean",
+        "original"
+      ],
+      "samples": [
+        {
+          "label": "preclean",
+          "durationMs": 8.400000005960464,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        },
+        {
+          "label": "original",
+          "durationMs": 26,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "warmup": false,
+      "order": [
+        "original",
+        "preclean"
+      ],
+      "samples": [
+        {
+          "label": "original",
+          "durationMs": 26.30000001192093,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        },
+        {
+          "label": "preclean",
+          "durationMs": 8.400000005960464,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "warmup": false,
+      "order": [
+        "preclean",
+        "original"
+      ],
+      "samples": [
+        {
+          "label": "preclean",
+          "durationMs": 8.599999994039536,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        },
+        {
+          "label": "original",
+          "durationMs": 26,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "warmup": false,
+      "order": [
+        "original",
+        "preclean"
+      ],
+      "samples": [
+        {
+          "label": "original",
+          "durationMs": 26.799999982118607,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        },
+        {
+          "label": "preclean",
+          "durationMs": 8.400000005960464,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "warmup": false,
+      "order": [
+        "preclean",
+        "original"
+      ],
+      "samples": [
+        {
+          "label": "preclean",
+          "durationMs": 8.5,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        },
+        {
+          "label": "original",
+          "durationMs": 25.799999982118607,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "warmup": false,
+      "order": [
+        "original",
+        "preclean"
+      ],
+      "samples": [
+        {
+          "label": "original",
+          "durationMs": 26.599999994039536,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        },
+        {
+          "label": "preclean",
+          "durationMs": 8.300000011920929,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "warmup": false,
+      "order": [
+        "preclean",
+        "original"
+      ],
+      "samples": [
+        {
+          "label": "preclean",
+          "durationMs": 8.5,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        },
+        {
+          "label": "original",
+          "durationMs": 25.80000001192093,
+          "refreshCount": 1,
+          "containerCount": 6400,
+          "messageCount": 160,
+          "textCharacters": 378880
+        }
+      ]
+    }
+  ],
+  "summaries": {
+    "original": {
+      "count": 10,
+      "minMs": 25.799999982118607,
+      "medianMs": 26.25000001490116,
+      "p25Ms": 26,
+      "p75Ms": 26.57499999552965,
+      "p95Ms": 26.75499999821186,
+      "maxMs": 26.799999982118607,
+      "medianAbsoluteDeviationMs": 0.29999999701976776
+    },
+    "preclean": {
+      "count": 10,
+      "minMs": 8.199999988079071,
+      "medianMs": 8.400000005960464,
+      "p25Ms": 8.400000005960464,
+      "p75Ms": 8.475000001490116,
+      "p95Ms": 8.554999996721744,
+      "maxMs": 8.599999994039536,
+      "medianAbsoluteDeviationMs": 0.04999999701976776
+    },
+    "pairedPrecleanMinusOriginalMs": {
+      "count": 10,
+      "minMs": -18.500000029802322,
+      "medianMs": -17.850000008940697,
+      "p25Ms": -18.24999998509884,
+      "p75Ms": -17.450000002980232,
+      "maxMs": -17.299999982118607
+    }
+  },
+  "validSamples": 20,
+  "validWarmupSamples": 4
+}
