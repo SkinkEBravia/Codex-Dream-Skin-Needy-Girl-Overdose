@@ -450,6 +450,18 @@ html[data-dream-skin="active"][data-dream-theme="internet-angel"] [data-angel-co
   box-shadow: inset 0 -2px var(--angel-pink) !important;
 }
 
+/* Native review anchors keep the new Changes scroller themed without changing
+   its scrolling, sticky headers, file toggles or diff add/delete colors. */
+html[data-dream-skin="active"][data-dream-theme="internet-angel"] [data-angel-component="review-scroll"] {
+  background: linear-gradient(155deg, rgb(25 24 78 / .96), rgb(49 32 103 / .96) 64%, rgb(255 69 200 / .08)) !important;
+  scrollbar-color: color-mix(in srgb, var(--angel-pink) 70%, var(--angel-blue)) transparent;
+}
+
+html[data-dream-skin="active"][data-dream-theme="internet-angel"] [data-angel-component="review-file"] {
+  border-color: var(--angel-line-soft) !important;
+  background: color-mix(in oklab, var(--angel-surface) 68%, transparent) !important;
+}
+
 /* Add/slash palettes are renderer portals without role=menu. */
 html[data-dream-skin="active"][data-dream-theme="internet-angel"] [data-angel-component="composer-palette"],
 html[data-dream-skin="active"][data-dream-theme="internet-angel"] div[class~="border-token-border"][class*="bg-token-dropdown-background"][class~="relative"][class~="overflow-hidden"][class~="rounded-2xl"][class~="p-1"]:has(> .vertical-scroll-fade-mask[class~="overflow-y-auto"]) {
@@ -1616,7 +1628,7 @@ html[data-dream-skin="active"][data-dream-theme="internet-angel"]:is(.dream-them
 }
 
 html[data-dream-skin="active"][data-dream-theme="internet-angel"]:is(.dream-theme-light, [data-dream-shell="light"])
-  [data-angel-component] :where(button, a, p, span, div, li, h1, h2, h3, h4, h5, h6, label, td, th) {
+  [data-angel-component] :where(button, a, p, span, div, li, h1, h2, h3, h4, h5, h6, label, td, th):not(:where([class*="git-decoration-added"], [class*="git-decoration-deleted"], [class*="text-codex-git-added"], [class*="text-codex-git-deleted"])) {
   color: var(--angel-adaptive-text) !important;
 }
 
@@ -1833,7 +1845,7 @@ html[data-dream-skin="active"][data-dream-theme="internet-angel"]:is(.dream-them
   [data-angel-component="system-toast"],
   [data-angel-component="subagent-frame"],
   [data-angel-component="permission"]
-) :where(button, a, p, span, div, li, h1, h2, h3, h4, h5, h6, label, td, th) {
+) :where(button, a, p, span, div, li, h1, h2, h3, h4, h5, h6, label, td, th):not(:where([class*="git-decoration-added"], [class*="git-decoration-deleted"], [class*="text-codex-git-added"], [class*="text-codex-git-deleted"])) {
   color: var(--angel-paper) !important;
 }
 
@@ -1872,7 +1884,7 @@ html[data-dream-skin="active"][data-dream-theme="internet-angel"]:is(.dream-them
 html[data-dream-skin="active"][data-dream-theme="internet-angel"]:is(.dream-theme-light, [data-dream-shell="light"])
   [data-angel-component="edited-card-stats"],
 html[data-dream-skin="active"][data-dream-theme="internet-angel"]:is(.dream-theme-light, [data-dream-shell="light"])
-  [data-angel-component="edited-card-stats"] :where(button, a, p, span, div, li, label) {
+  [data-angel-component="edited-card-stats"] :where(button, a, p, span, div, li, label):not(:where([class*="git-decoration-added"], [class*="git-decoration-deleted"], [class*="text-codex-git-added"], [class*="text-codex-git-deleted"])) {
   color: rgb(232 225 255 / .74) !important;
 }
 
@@ -1886,7 +1898,7 @@ html[data-dream-skin="active"][data-dream-theme="internet-angel"]:is(.dream-them
 html[data-dream-skin="active"][data-dream-theme="internet-angel"]:is(.dream-theme-light, [data-dream-shell="light"])
   [data-angel-component="edited-card-file-stats"],
 html[data-dream-skin="active"][data-dream-theme="internet-angel"]:is(.dream-theme-light, [data-dream-shell="light"])
-  [data-angel-component="edited-card-file-stats"] :where(button, a, p, span, div, li, label) {
+  [data-angel-component="edited-card-file-stats"] :where(button, a, p, span, div, li, label):not(:where([class*="git-decoration-added"], [class*="git-decoration-deleted"], [class*="text-codex-git-added"], [class*="text-codex-git-deleted"])) {
   color: rgb(228 220 255 / .76) !important;
 }
 

@@ -390,7 +390,7 @@ for (const selector of [
     `The adaptive Light Radix surface must exclude fixed-dark Settings menus: ${selector}`,
   );
 }
-const fixedDarkDescendants = fixedDarkCss.indexOf(") :where(button, a, p, span, div, li, h1, h2, h3, h4, h5, h6, label, td, th) {");
+const fixedDarkDescendants = fixedDarkCss.indexOf(") :where(button, a, p, span, div, li, h1, h2, h3, h4, h5, h6, label, td, th)");
 const lightSelectedSideWorkspace = fixedDarkCss.indexOf(
   '[data-angel-component="side-workspace"] [aria-selected="true"],',
   fixedDarkDescendants,
@@ -529,8 +529,8 @@ assert.doesNotMatch(sourceScript, /characterData\s*:\s*true/);
 assert.match(sourceScript, /attributes\s*:\s*true/);
 assert.match(
   sourceScript,
-  /attributeFilter\s*:\s*\[\s*["']data-ds-part["']\s*\]/,
-  "Attribute observation must stay limited to the renderer's public part contract.",
+  /attributeFilter\s*:\s*\[\s*["']data-ds-part["'],\s*["']hidden["'],\s*["']inert["'],\s*["']aria-hidden["'],\s*["']data-app-shell-active-page["']\s*\]/,
+  "Attribute observation must stay limited to public parts and native visibility lifecycle flags.",
 );
 assert.match(
   sourceScript,

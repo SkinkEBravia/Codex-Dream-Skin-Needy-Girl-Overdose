@@ -977,6 +977,7 @@ function makeOverlayFixture({
   editedHeader.closestNodes.set('[class*="rounded-lg"][class*="bg-token-dropdown-background"]', editedCard);
   editedHeader
     .addQuery('span[class~="font-medium"][class*="text-token-foreground"]', editedTitle)
+    .addQuery('span[class~="font-medium"]:is([class*="text-token-foreground"], [class~="text-default"])', editedTitle)
     .addQuery('[class~="size-10"][class~="rounded-lg"]:has(> svg)', editedIcon);
   editedUndo.parentElement = editedActions;
   editedReview.parentElement = editedActions;
@@ -987,6 +988,7 @@ function makeOverlayFixture({
     .addQuery(':scope > [class~="flex"][class~="flex-col"][class~="border-t"]', editedFiles);
   editedFiles
     .addQuery(".thread-diff-virtualized", editedFileRow)
+    .addQuery('.thread-diff-virtualized, [class~="group/turn-diff-file-row"]', editedFileRow)
     .addQuery(":scope > button", editedMore);
   editedFileRow.addQuery("button", editedFileButton);
   editedFileButton
@@ -1755,11 +1757,11 @@ assert.equal(
   JSON.stringify(bodyObservers[0].options),
   JSON.stringify({
     attributes: true,
-    attributeFilter: ["data-ds-part"],
+    attributeFilter: ["data-ds-part", "hidden", "inert", "aria-hidden", "data-app-shell-active-page"],
     childList: true,
     subtree: true,
   }),
-  "The body observer must limit attribute work to the renderer's public part contract.",
+  "The body observer must limit attribute work to public parts and native visibility lifecycle flags.",
 );
 assert.equal(typeof fixture.listeners.get("click"), "function");
 assert.equal(typeof fixture.listeners.get("resize"), "function");

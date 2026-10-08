@@ -33,6 +33,9 @@
     `${selectors.environmentPanel} :is(${selectors.environmentGit})`,
     selectors.environmentGit,
     selectors.workspaceEvidence,
+    '[data-app-action-review-scroll]',
+    '[data-review-path]',
+    '[data-app-action-review-file-toggle]',
     `:is(${selectors.sidebar})`,
     `:is(${selectors.sidebar}) :is(button, [role="button"])`,
     selectors.paletteScroll,
@@ -75,6 +78,7 @@
     '[class*="group/turn-diff-header"]',
     '.turn-diff-default-subtitle',
     '.thread-diff-virtualized',
+    '[class~="group/turn-diff-file-row"]',
     '[role="tabpanel"] > [class~="h-full"][class~="min-h-0"][class~="overflow-y-auto"][class~="px-3"][class~="py-5"]',
     '[role="tabpanel"] button[class~="items-start"][class~="w-full"]',
     'diffs-container',
@@ -511,7 +515,31 @@
   };
 
   const classifyWorkspaces = () => {
+    // Current Changes panes expose a native scroll anchor, even when none of
+    // their wrappers has the former containment/background utility classes.
+    const reviewPanels = new Set();
+    for (const scroll of document.querySelectorAll('[data-app-action-review-scroll]')) {
+      const panel = scroll.closest?.('[role="tabpanel"]');
+      if (!panel || panel.closest?.(selectors.sidebar)
+        || scroll.closest?.('[hidden], [inert], [aria-hidden="true"], [data-app-shell-active-page="false"]')
+        || scroll.closest?.('.thread-scroll-container, [data-content-search-unit-key]')) continue;
+      const box = panel.getBoundingClientRect?.() || { width: 0, height: 0 };
+      if (box.width < 260 || box.height < 180) continue;
+      reviewPanels.add(panel);
+      mark(panel, "side-workspace");
+      mark(scroll, "review-scroll");
+      for (const file of scroll.querySelectorAll?.('[data-review-path]') || []) {
+        mark(file, "review-file");
+      }
+    }
     const candidates = [...document.querySelectorAll(selectors.workspace)].filter((candidate) => {
+      // A native Changes pane is the workspace, not a surrounding conversation
+      // or a smaller containment wrapper inside it.
+      if (candidate.matches?.(selectors.shell)
+        || candidate.closest?.('.thread-scroll-container, [data-content-search-unit-key]')
+        || candidate.closest?.(selectors.sidebar)
+        || candidate.closest?.('[hidden], [inert], [aria-hidden="true"], [data-app-shell-active-page="false"]')
+        || [...reviewPanels].some((panel) => candidate.contains?.(panel) || panel.contains?.(candidate))) return false;
       const evidence = candidate.querySelector?.(selectors.workspaceEvidence);
       if (!evidence) return false;
       const box = candidate.getBoundingClientRect?.() || { left: 0, width: 0, height: 0, right: 0 };
@@ -667,11 +695,12 @@
 
     const editedTitlePattern = /^(?:\u5df2\u7f16\u8f91|edited)(?:\s+|[:\uff1a]\s*)\S/i;
     const undoPattern = /^(?:\u64a4\u9500|undo)$/i;
-    const reviewPattern = /^(?:\u5ba1\u6838|review)$/i;
+    const reviewPattern = /^(?:\u5ba1\u6838|\u67e5\u770b(?:\u66f4\u6539|\u53d8\u66f4)|review|view changes)$/i;
     for (const header of document.querySelectorAll('[class*="group/turn-diff-header"]')) {
-      const title = [...(header.querySelectorAll?.('span[class~="font-medium"][class*="text-token-foreground"]') || [])]
+      if (header.closest?.('[hidden], [inert], [aria-hidden="true"], [data-app-shell-active-page="false"]')) continue;
+      const title = [...(header.querySelectorAll?.('span[class~="font-medium"]:is([class*="text-token-foreground"], [class~="text-default"])') || [])]
         .find((node) => editedTitlePattern.test(textOf(node)));
-      const card = header.parentElement?.matches?.('[class*="--thread-resource-card-row-padding-x:"]')
+      const card = header.parentElement?.matches?.(':is([class*="--thread-resource-card-row-padding-x:"], [class*="--resource-card-row-padding-x:"])')
         ? header.parentElement
         : header.closest?.('[class*="rounded-lg"][class*="bg-token-dropdown-background"]');
       const stats = card?.querySelector?.(".turn-diff-default-subtitle");
@@ -693,7 +722,7 @@
       mark(undo, "edited-card-undo");
       mark(review, "edited-card-review");
       mark(files, "edited-card-files");
-      for (const row of files?.querySelectorAll?.(".thread-diff-virtualized") || []) {
+      for (const row of files?.querySelectorAll?.('.thread-diff-virtualized, [class~="group/turn-diff-file-row"]') || []) {
         const button = row.querySelector?.("button");
         mark(button || row, "edited-card-file-row");
         mark(button?.querySelector?.('[class~="min-w-0"][class~="flex-1"][class~="items-center"]'),
@@ -876,7 +905,7 @@
     const observer = new MutationObserver(refreshAfterMutation);
     observer.observe(document.body, {
       attributes: true,
-      attributeFilter: ["data-ds-part"],
+      attributeFilter: ["data-ds-part", "hidden", "inert", "aria-hidden", "data-app-shell-active-page"],
       childList: true,
       subtree: true,
     });
