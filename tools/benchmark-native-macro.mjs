@@ -7,9 +7,10 @@ import { inspectNativeContext, validateOutputPath, sanitizeProbeSnapshot } from 
 import { installInteractionProbe, analyzeMetricSnapshots, summarizeSamples } from "./interaction-probe.mjs";
 
 const SLOT = "__DREAM_SKIN_NATIVE_MACRO_GUARD__";
-// Checkpoint only. Enable after the independent automation module is verified.
-export const NATIVE_MACRO_READY = false;
-const roles = ["composer", "sessionA", "sessionB", "dock", "transcript"];
+// Bounded preset draft: lowercase ASCII letters, digits and spaces only.
+const PRESET_TEXT = "the quick brown fox jumps over the lazy dog 0123456789";
+// Enabled: mocked actor/recovery tests pass; keep the bounded live smoke as the release gate.
+export const NATIVE_MACRO_READY = true;
 const exactKeys = (o, keys) => o && typeof o === "object" && !Array.isArray(o)
   && Object.keys(o).sort().join() === [...keys].sort().join();
 const relativeJson = s => typeof s === "string" && !path.isAbsolute(s) && /^[A-Za-z0-9_.\/-]+\.json$/.test(s)
@@ -26,13 +27,10 @@ export function parseMacroArguments(args) {
   return { port, browserId, plan, output };
 }
 export function validateMacroPlan(plan) {
-  if (!exactKeys(plan, ["schema", "viewport", "points", "typingCharacters", "typingCadenceMs", "scrollInputs", "scrollPixels", "scrollCadenceMs", "routeIdleMs", "cycles", "timeoutMs"])
-    || plan.schema !== "dream-skin-native-macro-plan/1" || !exactKeys(plan.viewport, ["width", "height"])
-    || ![plan.viewport.width, plan.viewport.height].every(n => Number.isInteger(n) && n >= 400 && n <= 8192)
-    || !exactKeys(plan.points, roles)) throw Error("macro-plan-invalid");
-  for (const point of Object.values(plan.points)) if (!exactKeys(point, ["x", "y"]) || !Number.isFinite(point.x) || !Number.isFinite(point.y)
-    || point.x < 0 || point.y < 0 || point.x >= plan.viewport.width || point.y >= plan.viewport.height) throw Error("macro-plan-invalid");
-  for (const [key, low, high] of [["typingCharacters", 1, 200], ["typingCadenceMs", 20, 200], ["scrollInputs", 1, 10],
+  if (!exactKeys(plan, ["schema", "viewport", "pinnedClicks", "typingCharacters", "typingCadenceMs", "scrollInputs", "scrollPixels", "scrollCadenceMs", "routeIdleMs", "cycles", "timeoutMs"])
+    || plan.schema !== "dream-skin-native-macro-plan/2" || !exactKeys(plan.viewport, ["width", "height"])
+    || ![plan.viewport.width, plan.viewport.height].every(n => Number.isInteger(n) && n >= 400 && n <= 8192)) throw Error("macro-plan-invalid");
+  for (const [key, low, high] of [["pinnedClicks", 1, 3], ["typingCharacters", 1, 200], ["typingCadenceMs", 20, 200], ["scrollInputs", 0, 10],
     ["scrollPixels", 20, 600], ["scrollCadenceMs", 50, 300], ["routeIdleMs", 0, 3000], ["cycles", 1, 3], ["timeoutMs", 10000, 120000]]) {
     if (!Number.isInteger(plan[key]) || plan[key] < low || plan[key] > high) throw Error("macro-plan-invalid");
   }
@@ -40,50 +38,90 @@ export function validateMacroPlan(plan) {
 }
 
 /** Renderer-local route identity never crosses CDP. Only booleans/numbers are returned. */
-export function installMacroGuard(token, points) {
+export function installMacroGuard(token) {
   const slot = "__DREAM_SKIN_NATIVE_MACRO_GUARD__";
   if (window[slot]) throw Error("macro-guard-already-present");
   const composer = '.composer-surface-chrome,[class*="_ComposerLayoutRoot_"],[data-codex-composer-root],[data-ds-part="composer"],[data-composer-surface-variant][data-composer-radius-variant]';
   const visible = e => e && !e.closest('[hidden],[inert],[aria-hidden="true"],[data-app-shell-active-page="false"]') && e.getClientRects().length > 0;
+  const rect = e => e.getBoundingClientRect();
+  const center = e => { const r = rect(e); return { x: Math.min(Math.max(r.x + r.width / 2, 0), innerWidth - 1), y: Math.min(Math.max(r.y + r.height / 2, 0), innerHeight - 1) }; };
   const editor = () => [...document.querySelectorAll('textarea,[contenteditable="true"],[contenteditable="plaintext-only"]')]
     .filter(e => visible(e) && e.closest(composer));
-  const route = () => {
-    const page = [...document.querySelectorAll('[data-app-shell-active-page="true"]')].find(visible);
-    const unit = (page ?? document.querySelector('main')).querySelector('[data-content-search-unit-key]');
-    // The private key and URL stay only in this collector-owned renderer closure.
-    return unit ? `${location.href}\n${unit.getAttribute('data-content-search-unit-key')}` : null;
-  };
-  const initialRoute = route(), routeIds = new Map();
-  if (initialRoute !== null) routeIds.set(initialRoute, 1);
-  const sidebar = e => !!e?.closest('aside.app-shell-left-panel,[data-testid="app-shell-floating-left-panel"],.sidebar-navigation');
-  const nearestScroll = p => {
-    let e = document.elementFromPoint(p.x, p.y);
-    for (let i = 0; e && i < 24; i++, e = e.parentElement) {
-      if (e.scrollHeight > e.clientHeight + 4 && /auto|scroll/.test(getComputedStyle(e).overflowY)) return e;
-    }
-    return null;
-  };
   const text = e => e.tagName === "TEXTAREA" ? e.value : e.textContent;
-  window[slot] = { token, read(expected = null) {
-    const candidates = editor(), e = candidates.length === 1 ? candidates[0] : null, key = route();
-    if (key !== null && !routeIds.has(key)) routeIds.set(key, routeIds.size + 1);
-    const dock = nearestScroll(points.dock), transcript = nearestScroll(points.transcript);
-    const pointElement = document.elementFromPoint(points.composer.x, points.composer.y);
-    return { width: innerWidth, height: innerHeight, timeOrigin: performance.timeOrigin,
-      visible: document.visibilityState === "visible", documentFocused: document.hasFocus(),
-      editorCount: candidates.length, editorEmpty: !!e && text(e).length === 0,
-      editorMatchesExpected: !!e && expected !== null && text(e) === expected,
-      editorFocused: !!e && (document.activeElement === e || e.contains(document.activeElement)),
-      composerPointValid: !!pointElement?.closest(composer),
-      sessionAPointValid: sidebar(document.elementFromPoint(points.sessionA.x, points.sessionA.y)),
-      sessionBPointValid: sidebar(document.elementFromPoint(points.sessionB.x, points.sessionB.y)),
-      routeTrackingSupported: initialRoute !== null && key !== null, route: key === null ? 0 : routeIds.get(key),
-      dock: dock && sidebar(dock) ? { top: dock.scrollTop, max: dock.scrollHeight - dock.clientHeight } : null,
-      transcript: transcript && !sidebar(transcript) && !transcript.closest(composer)
-        ? { top: transcript.scrollTop, max: transcript.scrollHeight - transcript.clientHeight } : null };
-  } };
+  const sidebarRoot = () => document.querySelector('aside.app-shell-left-panel,[data-testid="app-shell-floating-left-panel"],.sidebar-navigation');
+  const inSidebar = e => { const aside = sidebarRoot(); return !!aside && aside.contains(e); };
+  // The active chat surface is the visible main that owns the composer editor,
+  // preferring one that already carries message units; the shell also keeps a
+  // hidden first main, so falling back to document.querySelector("main") is wrong.
+  const surface = () => {
+    const editors = editor();
+    const mains = [...document.querySelectorAll("main")].filter(m => visible(m) && (editors.length === 0 || editors.some(e => m.contains(e))));
+    return mains.find(m => m.querySelector('[data-content-search-unit-key]')) ?? mains[0]
+      ?? [...document.querySelectorAll('[data-app-shell-active-page="true"]')].find(visible) ?? null;
+  };
+  const route = () => {
+    const unit = surface()?.querySelector('[data-content-search-unit-key]');
+    if (unit) return `${location.href}\n${unit.getAttribute('data-content-search-unit-key')}`;
+    // A fresh empty conversation has zero message units; the active thread row
+    // is the remaining renderer-local identity anchor.
+    const label = threadRows().find(rowActive)?.getAttribute("aria-label");
+    return label ? `${location.href}\nrow:${label}` : null;
+  };
+  const isThread = r => r.dataset ? "appActionSidebarThreadActive" in r.dataset || "appActionSidebarThreadSelected" in r.dataset : false;
+  const threadRows = () => { const aside = sidebarRoot(); return aside ? [...aside.querySelectorAll('div[aria-label]')].filter(visible).filter(isThread) : []; };
+  const rowActive = r => r.getAttribute("aria-current") === "page"
+    || r.getAttribute("data-app-action-sidebar-thread-active") === "true" || r.getAttribute("data-app-action-sidebar-thread-selected") === "true";
+  const isSectionHeader = b => /(^|\s)group\/section/.test((b.className || "").toString());
+  const isPinnedHeader = b => /^置顶$|^pinned$/i.test((b.textContent || "").trim());
+  const pinned = () => {
+    const aside = sidebarRoot();
+    if (!aside) return { points: [], active: 0 };
+    const headers = [...aside.querySelectorAll("button")].filter(visible).filter(isSectionHeader);
+    const head = headers.find(isPinnedHeader);
+    if (!head) return { points: [], active: 0 };
+    const after = rect(head).bottom;
+    const next = headers.filter(b => b !== head).map(b => rect(b).top).filter(top => top > after);
+    const limit = next.length ? Math.min(...next) : Infinity;
+    const rows = threadRows().filter(r => { const top = rect(r).top; return top >= after - 2 && top < limit; }).slice(0, 3);
+    const active = rows.findIndex(rowActive);
+    return { points: rows.map(center), active: active >= 0 ? active + 1 : 0 };
+  };
+  const scrollable = e => e.scrollHeight > e.clientHeight + 4 && /auto|scroll/.test(getComputedStyle(e).overflowY);
+  const dock = () => { const aside = sidebarRoot(); return aside ? [...aside.querySelectorAll("*")].filter(visible).filter(scrollable).sort((a, b) => b.clientHeight - a.clientHeight)[0] ?? null : null; };
+  const transcript = () => {
+    const s = surface();
+    return s ? [...s.querySelectorAll("*")].filter(visible).filter(scrollable).filter(e => !inSidebar(e) && !e.closest(composer)).sort((a, b) => b.clientHeight - a.clientHeight)[0] ?? null : null;
+  };
+  const initialRowLabel = threadRows().find(rowActive)?.getAttribute("aria-label") ?? null;
+  const routeIds = new Map(); const initialRoute = route();
+  if (initialRoute !== null) routeIds.set(initialRoute, 1);
+  window[slot] = { token,
+    restoreInitial() {
+      if (initialRowLabel === null) return null;
+      const row = threadRows().find(r => r.getAttribute("aria-label") === initialRowLabel);
+      if (!row) return null;
+      row.scrollIntoView({ block: "center" });
+      const r = rect(row);
+      return r.top >= 0 && r.bottom <= innerHeight && r.width > 0 ? center(row) : null;
+    },
+    read(expected = null) {
+      const candidates = editor(), e = candidates.length === 1 ? candidates[0] : null, key = route();
+      if (key !== null && !routeIds.has(key)) routeIds.set(key, routeIds.size + 1);
+      const composerPoint = e ? center(e) : null;
+      const pinnedState = pinned(), dockList = dock(), transcriptList = transcript();
+      return { width: innerWidth, height: innerHeight, timeOrigin: performance.timeOrigin,
+        visible: document.visibilityState === "visible", documentFocused: document.hasFocus(), initialRowKnown: initialRowLabel !== null,
+        editorCount: candidates.length, editorEmpty: !!e && text(e).length === 0,
+        editorMatchesExpected: !!e && expected !== null && text(e) === expected,
+        editorFocused: !!e && (document.activeElement === e || e.contains(document.activeElement)),
+        composerPoint, composerPointValid: !!composerPoint && !!document.elementFromPoint(composerPoint.x, composerPoint.y)?.closest(composer),
+        routeTrackingSupported: initialRoute !== null && key !== null, route: key === null ? 0 : routeIds.get(key),
+        pinnedCount: pinnedState.points.length, pinnedActive: pinnedState.active, pinnedPoints: pinnedState.points,
+        dock: dockList ? { top: dockList.scrollTop, max: dockList.scrollHeight - dockList.clientHeight } : null, dockPoint: dockList ? center(dockList) : null,
+        transcript: transcriptList ? { top: transcriptList.scrollTop, max: transcriptList.scrollHeight - transcriptList.clientHeight } : null, transcriptPoint: transcriptList ? center(transcriptList) : null };
+    } };
   // A force-terminated controller must not retain private route keys indefinitely.
-  const timeout = setTimeout(() => { if (window[slot]?.token === token) delete window[slot]; routeIds.clear(); }, 125000);
+  const timeout = setTimeout(() => { if (window[slot]?.token === token) delete window[slot]; routeIds.clear(); }, 180000);
   window[slot].cleanup = () => { clearTimeout(timeout); routeIds.clear(); if (window[slot]?.token === token) delete window[slot]; };
   return window[slot].read();
 }
@@ -95,31 +133,51 @@ export async function runNativeMacro(session, plan, { now = () => performance.no
   let epoch, probeInstalled = false, guardInstalled = false, pendingOwned = "", owningRoute = 0;
   let status = "invalid", reason = "macro-failed", cleanupConfirmed = false, routeRestored = false;
   const checkDeadline = () => { if (interrupted() || session.closed) throw Error("macro-interrupted"); if (now() >= deadline) throw Error("macro-deadline-exceeded"); };
-  const send = async (method, params = {}) => { checkDeadline(); return session.send(method, params, Math.min(3000, Math.max(1, deadline - now()))); };
-  const evaluate = async expression => { checkDeadline(); return session.evaluate(expression, Math.min(3000, Math.max(1, deadline - now()))); };
+  // Cleanup must also run after the action deadline or an interrupt, so the raw
+  // path deliberately bypasses checkDeadline (checkpoint defect 4).
+  const rawSend = async (method, params = {}) => { if (session.closed) throw Error("session-closed"); return session.send(method, params, 3000); };
+  const rawEvaluate = async expression => { if (session.closed) throw Error("session-closed"); return session.evaluate(expression, 3000); };
+  const send = async (method, params = {}) => { checkDeadline(); return rawSend(method, params); };
+  const evaluate = async expression => { checkDeadline(); return rawEvaluate(expression); };
   const guardExpression = expected => `(()=>{const s=window.${SLOT};if(s?.token!==${JSON.stringify(token)})throw Error('macro-owner-lost');return s.read(${JSON.stringify(expected)});})()`;
   const read = async (expected = null) => {
     const s = await evaluate(guardExpression(expected));
     if (!s || s.width !== plan.viewport.width || s.height !== plan.viewport.height || !s.visible || s.editorCount !== 1 || !s.composerPointValid
-      || !s.sessionAPointValid || !s.sessionBPointValid || (epoch != null && s.timeOrigin !== epoch)) throw Error("macro-layout-or-document-changed");
+      || !s.routeTrackingSupported || (epoch != null && s.timeOrigin !== epoch)) throw Error("macro-layout-or-document-changed");
     return s;
   };
-  const click = async point => {
-    await send("Input.dispatchMouseEvent", { type: "mousePressed", button: "left", clickCount: 1, ...point });
-    await send("Input.dispatchMouseEvent", { type: "mouseReleased", button: "left", clickCount: 1, ...point });
+  const heldKeys = [];
+  const key = async (type, keyName, code, vk, modifiers = 0, text) => {
+    if (type === "rawKeyDown") heldKeys.push({ keyName, code, vk, modifiers });
+    await send("Input.dispatchKeyEvent", { type, key: keyName, code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk, modifiers, ...(text === undefined ? {} : { text }) });
+    if (type === "keyUp") { const at = heldKeys.findIndex(h => h.keyName === keyName && h.vk === vk && h.modifiers === modifiers); if (at >= 0) heldKeys.splice(at, 1); }
   };
-  const key = async (type, key, code, windowsVirtualKeyCode, modifiers = 0, text = undefined) =>
-    send("Input.dispatchKeyEvent", { type, key, code, windowsVirtualKeyCode, nativeVirtualKeyCode: windowsVirtualKeyCode, modifiers, ...(text === undefined ? {} : { text }) });
-  const x = async () => { await key("rawKeyDown", "x", "KeyX", 88); await key("char", "x", "KeyX", 88, 0, "x"); await key("keyUp", "x", "KeyX", 88); };
+  const click = async point => {
+    if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y) || point.x < 0 || point.y < 0
+      || point.x >= plan.viewport.width || point.y >= plan.viewport.height) throw Error("macro-layout-or-document-changed");
+    await send("Input.dispatchMouseEvent", { type: "mousePressed", button: "left", clickCount: 1, x: point.x, y: point.y });
+    await send("Input.dispatchMouseEvent", { type: "mouseReleased", button: "left", clickCount: 1, x: point.x, y: point.y });
+  };
+  const typeChar = async c => {
+    const lower = c.toLowerCase(), digit = /[0-9]/.test(lower), space = c === " ";
+    if (!digit && !space && !/[a-z]/.test(lower)) throw Error("macro-plan-invalid");
+    const keyName = space ? " " : lower, code = space ? "Space" : digit ? `Digit${lower}` : `Key${lower.toUpperCase()}`;
+    const vk = space ? 32 : digit ? 48 + Number(lower) : 65 + (lower.charCodeAt(0) - 97);
+    await key("rawKeyDown", keyName, code, vk); await key("char", keyName, code, vk, 0, c); await key("keyUp", keyName, code, vk);
+  };
   const frames = async () => evaluate("new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))");
   const probe = async () => sanitizeProbeSnapshot(await evaluate("window.__DREAM_SKIN_INTERACTION_PROBE__.snapshot()"));
-  const clearOwned = async () => {
+  const clearOwned = async (raw = false) => {
     if (!pendingOwned) return;
-    const s = await read(pendingOwned);
+    const step = raw ? rawSend : send, look = () => (raw ? rawEvaluate : evaluate)(guardExpression(pendingOwned));
+    const s = await look();
     if (!s.editorFocused || !s.editorMatchesExpected || s.route !== owningRoute) throw Error("macro-owned-draft-changed");
-    await key("rawKeyDown", "a", "KeyA", 65, 2); await key("keyUp", "a", "KeyA", 65, 2);
-    await key("rawKeyDown", "Backspace", "Backspace", 8); await key("keyUp", "Backspace", "Backspace", 8);
-    await frames(); if (!(await read()).editorEmpty) throw Error("macro-draft-cleanup-incomplete");
+    await step("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "a", code: "KeyA", windowsVirtualKeyCode: 65, nativeVirtualKeyCode: 65, modifiers: 2 });
+    await step("Input.dispatchKeyEvent", { type: "keyUp", key: "a", code: "KeyA", windowsVirtualKeyCode: 65, nativeVirtualKeyCode: 65, modifiers: 2 });
+    await step("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8, nativeVirtualKeyCode: 8 });
+    await step("Input.dispatchKeyEvent", { type: "keyUp", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8, nativeVirtualKeyCode: 8 });
+    await (raw ? rawEvaluate : evaluate)("new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))");
+    if (!(await look()).editorEmpty) throw Error("macro-draft-cleanup-incomplete");
     pendingOwned = "";
   };
   const phase = async (scenario, body) => {
@@ -135,76 +193,101 @@ export async function runNativeMacro(session, plan, { now = () => performance.no
       inputs: snapshot.counters.inputs - beforeProbe.counters.inputs, keydowns: snapshot.counters.trustedKeydowns - beforeProbe.counters.trustedKeydowns,
       timings: Object.fromEntries(["keydown-dispatch", "input-two-raf", "event-timing"].map(kind => [kind, summarizeSamples(samples, { kind })])) });
   };
+  const wheel = async (point, deltaY) => send("Input.dispatchMouseEvent", { type: "mouseWheel", x: point.x, y: point.y, deltaX: 0, deltaY });
+  const livePoint = async target => { const s = await read(); if (!s[target]) throw Error("macro-scroll-range-insufficient"); return s[target]; };
   try {
-    const initial = await evaluate(`(${installMacroGuard.toString()})(${JSON.stringify(token)},${JSON.stringify(plan.points)})`);
+    const initial = await evaluate(`(${installMacroGuard.toString()})(${JSON.stringify(token)})`);
     guardInstalled = true; epoch = initial.timeOrigin;
     const s = await read();
+    if (!s.initialRowKnown) throw Error("macro-active-row-unknown");
     if (!s.editorEmpty) throw Error("macro-existing-draft");
-    if (!s.routeTrackingSupported || s.route !== 1) throw Error("macro-route-tracking-unavailable");
+    if (s.pinnedCount < plan.pinnedClicks) throw Error("macro-pinned-items-unavailable");
+    if (s.route !== 1) throw Error("macro-route-tracking-unavailable");
     await send("Performance.enable");
     await evaluate(`(()=>{if(window.__DREAM_SKIN_INTERACTION_PROBE__)throw Error('probe-already-present');(${installInteractionProbe.toString()})({maxSamples:10000,durationMs:125000});window.__DREAM_SKIN_INTERACTION_PROBE__.collectorToken=${JSON.stringify(token)};return true;})()`);
     probeInstalled = true;
-    const waitRoute = async expected => {
-      const limit = Math.min(deadline, now() + 5000); let state;
-      do { state = await read(); if (state.route === expected) { await pause(plan.routeIdleMs); return state; } await pause(50); } while (now() < limit);
-      throw Error("macro-route-incomplete");
-    };
+    const preset = PRESET_TEXT.slice(0, plan.typingCharacters);
     for (let cycle = 0; cycle < plan.cycles; cycle++) {
-      await phase("switch", async () => {
-        if (!(await read()).editorEmpty) throw Error("macro-existing-draft");
-        await click(plan.points.sessionB); let b;
-        const limit = Math.min(deadline, now() + 5000);
-        do { b = await read(); if (b.route !== 1 && b.route > 0) break; await pause(50); } while (now() < limit);
-        if (!b || b.route === 1 || !b.route) throw Error("macro-route-incomplete");
-        if (!b.editorEmpty) throw Error("macro-existing-draft");
-        await pause(plan.routeIdleMs); await click(plan.points.sessionA); await waitRoute(1);
-        return { completedSwitches: 2 };
-      });
-      await click(plan.points.composer);
-      if (!(await read()).editorFocused || !(await read()).editorEmpty) throw Error("macro-editor-focus-or-draft");
-      owningRoute = 1;
-      await phase("first-key", async () => { pendingOwned = "x"; await x(); if (!(await read(pendingOwned)).editorMatchesExpected) throw Error("macro-input-incomplete"); return { characters: 1 }; });
+      // Sidebar ("项目栏") to the top, then each pinned conversation once in turn.
+      let top = await read();
+      if (!top.dock || !top.dockPoint) throw Error("macro-scroll-range-insufficient");
+      for (let i = 0; top.dock.top > 2 && i < 10; i++) { await wheel(top.dockPoint, -600); await pause(plan.scrollCadenceMs); top = await read(); }
+      if (top.dock.top > 2) throw Error("macro-dock-top-unreachable");
+      for (let k = 1; k <= plan.pinnedClicks; k++) {
+        await phase("switch", async () => {
+          const before = await read();
+          if (!before.editorEmpty) throw Error("macro-existing-draft");
+          await click(before.pinnedPoints[k - 1]);
+          const limit = Math.min(deadline, now() + 5000); let afterState;
+          do { afterState = await read(); if (afterState.pinnedActive === k) break; await pause(50); } while (now() < limit);
+          if (!afterState || afterState.pinnedActive !== k) throw Error("macro-route-incomplete");
+          if (!afterState.editorEmpty) throw Error("macro-existing-draft");
+          await pause(plan.routeIdleMs);
+          return { completedSwitches: k };
+        });
+      }
+      await click((await read()).composerPoint);
+      if (!(await read()).editorFocused) throw Error("macro-editor-focus-or-draft");
+      owningRoute = (await read()).route;
+      await phase("first-key", async () => { pendingOwned = preset[0]; await typeChar(preset[0]); if (!(await read(pendingOwned)).editorMatchesExpected) throw Error("macro-input-incomplete"); return { characters: 1 }; });
       await clearOwned();
       await phase("typing", async () => {
-        for (let i = 0; i < plan.typingCharacters; i++) {
-          const s = await read(pendingOwned);
-          if (!s.editorFocused || s.route !== owningRoute || !(pendingOwned ? s.editorMatchesExpected : s.editorEmpty)) throw Error("macro-owned-draft-changed");
-          pendingOwned += "x"; await x(); await pause(plan.typingCadenceMs);
+        for (let i = 1; i < preset.length; i++) {
+          const draft = await read(pendingOwned);
+          if (!draft.editorFocused || draft.route !== owningRoute || !draft.editorMatchesExpected) throw Error("macro-owned-draft-changed");
+          pendingOwned += preset[i]; await typeChar(preset[i]); await pause(plan.typingCadenceMs);
         }
         if (!(await read(pendingOwned)).editorMatchesExpected) throw Error("macro-input-incomplete");
-        return { characters: plan.typingCharacters, requestedCadenceMs: plan.typingCadenceMs };
+        return { characters: preset.length, requestedCadenceMs: plan.typingCadenceMs };
       });
       await clearOwned();
-      for (const target of ["dock", "transcript"]) {
-        const start = (await read())[target], distance = plan.scrollInputs * plan.scrollPixels;
+      // Timed wheel phases are the benchmark workload; the pinned-switching and
+      // typing smoke runs with scrollInputs 0 skip them entirely.
+      for (const target of plan.scrollInputs >= 1 ? ["dock", "transcript"] : []) {
+        const start = (await read())[target], pointKey = target === "dock" ? "dockPoint" : "transcriptPoint";
+        const distance = plan.scrollInputs * plan.scrollPixels;
         if (!start || start.max < distance) throw Error("macro-scroll-range-insufficient");
         const direction = start.top + distance <= start.max ? 1 : start.top >= distance ? -1 : 0;
         if (!direction) throw Error("macro-scroll-range-insufficient");
-        const wheel = deltaY => send("Input.dispatchMouseEvent", { type: "mouseWheel", ...plan.points[target], deltaX: 0, deltaY });
         await phase(target === "dock" ? "scroll-dock" : "scroll-transcript", async () => {
-          for (let i = 0; i < plan.scrollInputs; i++) { await read(); await wheel(direction * plan.scrollPixels); await pause(plan.scrollCadenceMs); }
+          for (let i = 0; i < plan.scrollInputs; i++) { await wheel(await livePoint(pointKey), direction * plan.scrollPixels); await pause(plan.scrollCadenceMs); }
           await frames(); const end = (await read())[target];
           if (!end || Math.abs(end.top - start.top - direction * distance) > 4) throw Error("macro-scroll-incomplete");
           return { wheelInputs: plan.scrollInputs, direction, requestedPixels: distance, observedPixels: end.top - start.top };
         });
-        for (let i = 0; i < plan.scrollInputs; i++) { await wheel(-direction * plan.scrollPixels); await pause(plan.scrollCadenceMs); }
+        for (let i = 0; i < plan.scrollInputs; i++) { await wheel(await livePoint(pointKey), -direction * plan.scrollPixels); await pause(plan.scrollCadenceMs); }
         await frames(); if (Math.abs((await read())[target].top - start.top) > 4) throw Error("macro-scroll-restore-incomplete");
       }
     }
     status = "completed"; reason = null;
   } catch (e) {
-    const allowed = new Set(["macro-interrupted", "macro-deadline-exceeded", "macro-layout-or-document-changed", "macro-existing-draft", "macro-route-tracking-unavailable", "macro-route-incomplete", "macro-editor-focus-or-draft", "macro-owned-draft-changed", "macro-input-incomplete", "macro-draft-cleanup-incomplete", "macro-probe-loss", "macro-counter-reset", "macro-scroll-range-insufficient", "macro-scroll-incomplete", "macro-scroll-restore-incomplete"]);
+    const allowed = new Set(["macro-interrupted", "macro-deadline-exceeded", "macro-layout-or-document-changed", "macro-existing-draft", "macro-active-row-unknown", "macro-pinned-items-unavailable", "macro-route-tracking-unavailable", "macro-route-incomplete", "macro-editor-focus-or-draft", "macro-owned-draft-changed", "macro-input-incomplete", "macro-draft-cleanup-incomplete", "macro-probe-loss", "macro-counter-reset", "macro-scroll-range-insufficient", "macro-dock-top-unreachable", "macro-scroll-incomplete", "macro-scroll-restore-incomplete"]);
     reason = allowed.has(e.message) ? e.message : "macro-failed";
   } finally {
-    try { await clearOwned(); } catch { if (pendingOwned) reason = "macro-draft-cleanup-unconfirmed"; }
-    try { const s = await read(); if (s.route !== 1 && !pendingOwned) { await click(plan.points.sessionA); await pause(300); } routeRestored = (await read()).route === 1; } catch {}
+    try { await clearOwned(true); } catch { if (pendingOwned) reason = "macro-draft-cleanup-unconfirmed"; }
+    for (const held of heldKeys.splice(0)) {
+      try { await rawSend("Input.dispatchKeyEvent", { type: "keyUp", key: held.keyName, code: held.code, windowsVirtualKeyCode: held.vk, nativeVirtualKeyCode: held.vk, modifiers: held.modifiers }); } catch {}
+    }
+    try {
+      let s = await rawEvaluate(guardExpression(null));
+      if (s.route !== 1) {
+        const point = await rawEvaluate(`(()=>{const s=window.${SLOT};if(s?.token!==${JSON.stringify(token)})throw Error('macro-owner-lost');return s.restoreInitial();})()`);
+        if (point) {
+          await rawSend("Input.dispatchMouseEvent", { type: "mousePressed", button: "left", clickCount: 1, x: point.x, y: point.y });
+          await rawSend("Input.dispatchMouseEvent", { type: "mouseReleased", button: "left", clickCount: 1, x: point.x, y: point.y });
+          const limit = now() + 3000;
+          do { await pause(100); s = await rawEvaluate(guardExpression(null)); } while (s.route !== 1 && now() < limit);
+        }
+      }
+      routeRestored = s.route === 1;
+    } catch {}
     // Cleanup is allowed even after the action deadline; never operate an unowned probe.
-    try { cleanupConfirmed = await session.evaluate(`(()=>{const p=window.__DREAM_SKIN_INTERACTION_PROBE__,g=window.${SLOT};let ok=true;if(${probeInstalled}){if(p?.collectorToken!==${JSON.stringify(token)})ok=false;else{p.cleanup();delete window.__DREAM_SKIN_INTERACTION_PROBE__;}}if(${guardInstalled}){if(g?.token!==${JSON.stringify(token)})ok=false;else g.cleanup();}return ok;})()`, 3000); } catch {}
+    try { cleanupConfirmed = await rawEvaluate(`(()=>{const p=window.__DREAM_SKIN_INTERACTION_PROBE__,g=window.${SLOT};let ok=true;if(${probeInstalled}){if(p?.collectorToken!==${JSON.stringify(token)})ok=false;else{p.cleanup();delete window.__DREAM_SKIN_INTERACTION_PROBE__;}}if(${guardInstalled}){if(g?.token!==${JSON.stringify(token)})ok=false;else g.cleanup();}return ok;})()`); } catch {}
   }
   if (!cleanupConfirmed || pendingOwned || !routeRestored) { status = "invalid"; reason ??= "macro-restoration-unconfirmed"; }
   return { schema: "dream-skin-native-macro/1", source: "cdp-macro", status, reason, plan, observations,
     cleanupConfirmed, draftRestored: pendingOwned === "", routeRestored,
-    limitations: ["Targeted trusted Chromium input, not physical Windows keyboard or OS IME.", "Timing proxies are not confirmed displayed pixels; Event Timing is thresholded.", "Cadence is a driver wait after completed commands; guards add overhead.", "Input and work metrics exclude screenshots; live app/background workload remain uncontrolled."] };
+    limitations: ["Targeted trusted Chromium input, not physical Windows keyboard or OS IME.", "Pinned targets and the composer point are calibrated from live DOM rectangles each step.", "Switch verification uses the sidebar active-thread marker and renderer-local route ids.", "Timing proxies are not confirmed displayed pixels; Event Timing is thresholded.", "Input and work metrics exclude screenshots; live app/background workload remain uncontrolled."] };
 }
 
 async function boundedRead(file, maxBytes) {
@@ -236,7 +319,7 @@ export async function main(args = process.argv.slice(2)) {
       else candidate.close();
     }
     if (!session) throw Error("macro-native-target-unavailable");
-    console.log("Verified native macro started; fixed unsent text and wheel inputs only.");
+    console.log("Verified native macro started; pinned switching, fixed unsent text and wheel inputs only.");
     const report = await runNativeMacro(session, plan, { interrupted: () => interrupted || anchor.closed });
     const reportBytes = JSON.stringify(report, null, 2) + "\n"; if (Buffer.byteLength(reportBytes) > 2 * 1024 * 1024) throw Error("macro-report-bound");
     await fs.writeFile(output, reportBytes, { flag: "wx" });

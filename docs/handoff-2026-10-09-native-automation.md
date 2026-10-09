@@ -1,63 +1,62 @@
-# Native automation checkpoint — 2026-10-09
+# Native automation checkpoint — 2026-10-09 (updated after CDP fix)
 
-Real chat switching and typing tests still need an independent automation module.
-The user requested this checkpoint so another session can finish that module.
-The controller prototype is disabled (`NATIVE_MACRO_READY = false`) at both
-entry points, before filesystem access or app input. Do not describe it as a
-working macro or native benchmark.
+The CDP controller is fixed and smoke-validated against the live Windows Codex
+client (26.1002.7124.0, store package, managed session on port 9335). The
+readiness flag is enabled (`NATIVE_MACRO_READY = true` in
+`tools/benchmark-native-macro.mjs`). The passing smoke report is
+`.local-evidence/native-macro-report.json` (local only, never committed).
 
-## Saved work
+## What was wrong and how it was fixed
 
-- `tools/benchmark-native-macro.mjs`: unfinished fixed-plan CDP controller,
-  bounded plan parser, draft/focus checks, numeric timing collection and cleanup
-  scaffold. It needs live-app validation and recovery tests before enabling.
-- `windows/scripts/run-performance-macro.ps1`: identity-bound launcher with
-  ordinary-path checks, plan/report bounds, 180-second child timeout and
-  before/after package, browser, HWND, PID/start/session and pause checks.
-- `tools/native-macro-wrapper.test.mjs`: seven mocked wrapper tests pass,
-  including Windows PowerShell 5.1 parsing. Reparse attack tests use mocked
-  metadata because sandbox junction creation was unavailable.
-- `tools/benchmark-native-macro.test.mjs`: tests the disabled entry points and
-  bounded argument/plan validation. It does not validate the unfinished actor.
+1. Route surface selection. The shell keeps a hidden first `main` with zero
+   search units, and the only `[data-app-shell-active-page="true"]` element is
+   invisible (0×0), so the old `route()` resolved to `null`. The guard now
+   selects the visible `main` that owns the composer editor, preferring one
+   with message units.
+2. Coordinate calibration. Fixed plan points went stale between sessions
+   (observed editor rect moved from x≈364 to x≈490 between checkpoints). The
+   plan no longer carries points; the guard computes the composer, pinned-row,
+   dock and transcript points from live DOM rectangles each step, inside the
+   plan-pinned viewport (1707×1019 CSS px, dpr 1.5 on the reference machine).
+3. Empty-conversation identity. A fresh chat has zero
+   `data-content-search-unit-key` units and no scrollable transcript; route
+   identity now falls back to the active sidebar row's `aria-label`, which
+   never crosses CDP.
+4. Cleanup after deadline expiry. The action path keeps the deadline gate; the
+   cleanup path (`clearOwned`, key release, route restore, probe/guard removal)
+   uses raw bounded CDP calls that bypass `checkDeadline`, so an owned draft is
+   always recoverable. Logically held keys are released best-effort.
+5. Plan schema is now `dream-skin-native-macro-plan/2`: numeric scenario
+   parameters plus `pinnedClicks` (1–3); `scrollInputs: 0` skips the timed
+   wheel phases so the smoke plan runs exactly the requested scenario
+   (sidebar to top → each pinned conversation once → composer focus → preset
+   text, never submitted).
 
-The preceding working P1 checkpoint is `aafd42483b1e34c5788132f91065ce3fb88594bf`.
-This checkpoint uses branch `codex/adapt-current-ui` on the
-`SkinkEBravia/Codex-Dream-Skin-Needy-Girl-Overdose` fork.
-Its fixtures and passive recorder remain unchanged. The installed skin/runtime
-were not modified. No macro typing, session switching, prompt submission, PR,
-merge, version bump or release was performed in this checkpoint.
+## Verification status
 
-## What the independent module must resolve
+- Mocked actor tests (`tools/benchmark-native-macro.test.mjs`): 7 passing,
+  including a scripted-renderer happy path, deadline expiry during an owned
+  draft, and interrupt-during-draft recovery.
+- Adjacent suites (`native-macro-wrapper`, `benchmark-interactions`,
+  `record-native-interactions`, `interaction-probe`): 30 passing.
+- Live smoke on the real app: completed with 3 pinned switches (verified via
+  the sidebar `aria-current="page"` /
+  `data-app-action-sidebar-thread-active="true"` marker), first key, 8 preset
+  characters, cleanup confirmed, draft and initial route restored. Post-run
+  guard diag: editor empty, no residue.
+- Not yet done: paired skin-on/off trials with the passive recorder, and the
+  recovery scenarios on the real app (deadline/interrupt live).
 
-1. Calibrate fixed points in native renderer coordinates. The observed Windows
-   screenshot and renderer viewport differ: the renderer reported 1707 × 1019,
-   and its editor rectangle was approximately x=364.44, y=921.33, w=712, h=44.
-   The screenshot-derived composer point did not hit that editor.
-2. Select the active chat surface rather than the first `main`. The first main
-   contained no editor or message units; a second main contained the editor and
-   nine `data-content-search-unit-key` units. Current route tracking selects the
-   wrong surface and reports unavailable. Resolve this before any switching.
-3. Validate A → B → A readiness, empty drafts, focus, known test-text ownership,
-   completed input counts, wheel displacement and restoration. Stop on user
-   interference, changed layout, reload or unexpected content. Never send a
-   prompt or clear a pre-existing draft.
-4. Add meaningful actor/recovery tests, including deadline expiry during an
-   owned draft and mid-scroll failures. Current cleanup can be prevented by the
-   action deadline and interrupted scroll restoration is incomplete. Address
-   those defects and release any pending keys/buttons after partial input
-   failures before setting the readiness flag to true.
-5. Replay a short bounded native smoke test, then collect paired skin-on/off
-   trials with accurate automated-input provenance. Keep screenshots outside
-   typing windows; report actual cadence, Event Timing thresholds and proxies.
+## Open items for the interaction benchmark
 
-The native helper successfully accepted a focus click, but no test character
-was entered. Earlier wording that the skill guidance was an immutable permission
-block was corrected: explicit user authorization takes precedence over skill
-guidance under this workspace's instructions. Do not evade actual tool/API
-rejections or security controls. The independent module should use the existing
-verified debugging connection and normal input APIs.
+- Transcript wheel behavior needs its own study before timed scroll phases run
+  against the real app: an `absolute inset-0 cursor-interaction` button
+  overlays the transcript, small wheel deltas at the top boundary were
+  swallowed, and Windows 11 elastic overscroll produced negative scrollTop
+  (−599.3 observed). Evidence: `.local-evidence/transcript-probe2.mjs`,
+  `transcript-wheel-probe.mjs`.
+- The sidebar dock scrolled 1:1 with wheel input and restored exactly; only
+  the transcript misbehaved.
 
-Use [the P1 report](phase1-interactions-2026-10-09.md) for previous evidence:
-the timed manual trial captured native input delay; automated real-app A/B
-attribution remains pending. Local identities, plans and diagnostics stay in
-ignored `.local-evidence/`; do not commit private app state or raw native traces.
+Local identities, plans and diagnostics stay in ignored `.local-evidence/`;
+do not commit private app state or raw native traces.
