@@ -147,3 +147,7 @@ Retain the plan's alternating paired trials, counter/gauge and document-epoch
 rules, lightweight timing versus separate diagnostic runs, bounded collection
 and allowlisted exports. No runtime cleanup or enhancement was performed in
 Phase 0, and issue #1 remains open.
+
+The subsequent [Phase 1 interaction checkpoint](phase1-interactions-2026-10-09.md)
+adds the scenario collectors and repeated fixture evidence. It retains the
+native-versus-fixture boundaries defined here; this Phase 0 lock is unchanged.

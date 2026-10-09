@@ -9,10 +9,12 @@ This plan incorporates [fork issue #1](https://github.com/SkinkEBravia/Codex-Dre
 reviewed on 2026-10-09 with no comments, and the
 [pre-cleanup audit](pre-clean-audit-2026-10-09.md). It supersedes the audit's
 original cleanup-first sequence without changing its historical findings.
-The full scenario harness, cleanup and enhancement experiments described below
-have not been implemented. The [Phase 0 checkpoint](phase0-baseline-2026-10-09.md)
-now freezes source/workload identities and records a limited synthetic
-classifier variability run. Native interaction comparisons remain pending.
+The [Phase 0 checkpoint](phase0-baseline-2026-10-09.md) freezes source/workload
+identities and records a limited synthetic classifier variability run. The
+[Phase 1 harness](phase1-interactions-2026-10-09.md) now implements controlled
+keyboard, switching, scroll and appearance fixtures plus a passive Windows
+native recorder. Cleanup and enhancement experiments have not started.
+Controlled native stock/original/pre-clean interaction comparisons remain pending.
 
 ## What the issue changes
 
@@ -148,6 +150,18 @@ Exit condition: the harness distinguishes invalid runs and known induced
 regressions, reproduces a baseline across trials, and yields an honest
 stock/original/pre-clean comparison. A result showing no difference is valid.
 
+Current implementation distinguishes trusted browser keyboard input from DOM
+mutation and synthetic composition, detects an induced 60 ms handler, and
+collects pinned original/pre-clean payloads alongside an explicitly unskinned
+synthetic control. The control is not native Stock-CDP. The first repeated
+typing and surface collections have ten measured trials after two warmups per
+variant, with 324 valid observations including warmups and none rejected. A
+timed native trial captured 99 keydowns / 85 input events and a 240.90 ms first
+input-to-two-frame proxy. See the Phase 1 report for numeric results and the
+native recorder's limits. Startup, saved-theme switching, native virtualization,
+OS IME and controlled native variant comparisons are not covered by this fixture.
+Those gaps remain validation work rather than implicit successful scenarios.
+
 ## Phase 2 — Small cleanup without a speedup claim
 
 Implement audit C1/C3/C4 in small reviewable commits. Resolve C2's external
@@ -173,6 +187,15 @@ Order priorities 1–3 using baseline evidence; move paint ahead of selectors
 if the diagnostic runs identify it as the dominant cost. Reject enhancements
 that add complexity without a repeatable benefit. Record negative results
 with the tested scope instead of declaring an entire technique useless.
+
+The Phase 1 fixture reduced immediate post-switch first-key style work, while
+its steady-typing timing remained nearly neutral. The timed native recording
+still captured substantial post-dispatch input delay and high mixed-activity
+style work. Before choosing a further enhancement, isolate native style and
+editing work around delayed inputs, then compare the same scenario with the
+skin paused or a verified stock launch. Selector/paint diagnostics must remain
+separate from lightweight timing trials. This evidence gives no reason to
+prioritize precompilation as a remedy for ongoing typing delay.
 
 ## Phase 4 — Validate and publish evidence
 
