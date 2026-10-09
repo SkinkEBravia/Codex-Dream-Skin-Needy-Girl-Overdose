@@ -147,16 +147,30 @@ export async function runNativeMacro(session, plan, { now = () => performance.no
     return s;
   };
   const heldKeys = [];
-  const key = async (type, keyName, code, vk, modifiers = 0, text) => {
+  let heldMouse = null;
+  const key = async (type, keyName, code, vk, modifiers = 0, text, raw = false) => {
+    if (!raw) checkDeadline();
     if (type === "rawKeyDown") heldKeys.push({ keyName, code, vk, modifiers });
-    await send("Input.dispatchKeyEvent", { type, key: keyName, code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk, modifiers, ...(text === undefined ? {} : { text }) });
+    await rawSend("Input.dispatchKeyEvent", { type, key: keyName, code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk, modifiers, ...(text === undefined ? {} : { text }) });
     if (type === "keyUp") { const at = heldKeys.findIndex(h => h.keyName === keyName && h.vk === vk && h.modifiers === modifiers); if (at >= 0) heldKeys.splice(at, 1); }
   };
-  const click = async point => {
+  const releaseMouse = async () => {
+    if (!heldMouse) return;
+    await rawSend("Input.dispatchMouseEvent", { type: "mouseReleased", button: "left", clickCount: 1, ...heldMouse });
+    heldMouse = null;
+  };
+  const releaseKeys = async () => {
+    for (const held of [...heldKeys]) {
+      try { await key("keyUp", held.keyName, held.code, held.vk, held.modifiers, undefined, true); } catch {}
+    }
+  };
+  const click = async (point, raw = false) => {
     if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y) || point.x < 0 || point.y < 0
       || point.x >= plan.viewport.width || point.y >= plan.viewport.height) throw Error("macro-layout-or-document-changed");
-    await send("Input.dispatchMouseEvent", { type: "mousePressed", button: "left", clickCount: 1, x: point.x, y: point.y });
-    await send("Input.dispatchMouseEvent", { type: "mouseReleased", button: "left", clickCount: 1, x: point.x, y: point.y });
+    if (!raw) checkDeadline();
+    heldMouse = { x: point.x, y: point.y };
+    try { await rawSend("Input.dispatchMouseEvent", { type: "mousePressed", button: "left", clickCount: 1, ...heldMouse }); }
+    finally { await releaseMouse(); }
   };
   const typeChar = async c => {
     const lower = c.toLowerCase(), digit = /[0-9]/.test(lower), space = c === " ";
@@ -169,13 +183,15 @@ export async function runNativeMacro(session, plan, { now = () => performance.no
   const probe = async () => sanitizeProbeSnapshot(await evaluate("window.__DREAM_SKIN_INTERACTION_PROBE__.snapshot()"));
   const clearOwned = async (raw = false) => {
     if (!pendingOwned) return;
-    const step = raw ? rawSend : send, look = () => (raw ? rawEvaluate : evaluate)(guardExpression(pendingOwned));
+    const look = () => (raw ? rawEvaluate : evaluate)(guardExpression(pendingOwned));
     const s = await look();
+    // Backspace may have completed just before interruption prevented key-up.
+    if (s.editorFocused && s.route === owningRoute && s.editorEmpty) { pendingOwned = ""; return; }
     if (!s.editorFocused || !s.editorMatchesExpected || s.route !== owningRoute) throw Error("macro-owned-draft-changed");
-    await step("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "a", code: "KeyA", windowsVirtualKeyCode: 65, nativeVirtualKeyCode: 65, modifiers: 2 });
-    await step("Input.dispatchKeyEvent", { type: "keyUp", key: "a", code: "KeyA", windowsVirtualKeyCode: 65, nativeVirtualKeyCode: 65, modifiers: 2 });
-    await step("Input.dispatchKeyEvent", { type: "rawKeyDown", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8, nativeVirtualKeyCode: 8 });
-    await step("Input.dispatchKeyEvent", { type: "keyUp", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8, nativeVirtualKeyCode: 8 });
+    await key("rawKeyDown", "a", "KeyA", 65, 2, undefined, raw);
+    await key("keyUp", "a", "KeyA", 65, 2, undefined, raw);
+    await key("rawKeyDown", "Backspace", "Backspace", 8, 0, undefined, raw);
+    await key("keyUp", "Backspace", "Backspace", 8, 0, undefined, raw);
     await (raw ? rawEvaluate : evaluate)("new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))");
     if (!(await look()).editorEmpty) throw Error("macro-draft-cleanup-incomplete");
     pendingOwned = "";
@@ -189,8 +205,11 @@ export async function runNativeMacro(session, plan, { now = () => performance.no
     const metrics = analyzeMetricSnapshots(before.metrics, after.metrics, { sameEpoch: s.timeOrigin === epoch });
     if (!metrics.valid) throw Error("macro-counter-reset");
     const samples = snapshot.samples.filter(v => v.scenarioEpoch === snapshot.scenarioEpoch);
+    const inputs = snapshot.counters.inputs - beforeProbe.counters.inputs;
+    const keydowns = snapshot.counters.trustedKeydowns - beforeProbe.counters.trustedKeydowns;
+    if (["first-key", "typing"].includes(scenario) && (inputs !== action.characters || keydowns !== action.characters)) throw Error("macro-input-count-mismatch");
     observations.push({ scenario, action, valid: true, source: "cdp-macro", metrics,
-      inputs: snapshot.counters.inputs - beforeProbe.counters.inputs, keydowns: snapshot.counters.trustedKeydowns - beforeProbe.counters.trustedKeydowns,
+      inputs, keydowns,
       timings: Object.fromEntries(["keydown-dispatch", "input-two-raf", "event-timing"].map(kind => [kind, summarizeSamples(samples, { kind })])) });
   };
   const wheel = async (point, deltaY) => send("Input.dispatchMouseEvent", { type: "mouseWheel", x: point.x, y: point.y, deltaX: 0, deltaY });
@@ -206,7 +225,7 @@ export async function runNativeMacro(session, plan, { now = () => performance.no
     await send("Performance.enable");
     await evaluate(`(()=>{if(window.__DREAM_SKIN_INTERACTION_PROBE__)throw Error('probe-already-present');(${installInteractionProbe.toString()})({maxSamples:10000,durationMs:125000});window.__DREAM_SKIN_INTERACTION_PROBE__.collectorToken=${JSON.stringify(token)};return true;})()`);
     probeInstalled = true;
-    const preset = PRESET_TEXT.slice(0, plan.typingCharacters);
+    const preset = PRESET_TEXT.repeat(Math.ceil(plan.typingCharacters / PRESET_TEXT.length)).slice(0, plan.typingCharacters);
     for (let cycle = 0; cycle < plan.cycles; cycle++) {
       // Sidebar ("项目栏") to the top, then each pinned conversation once in turn.
       let top = await read();
@@ -232,7 +251,7 @@ export async function runNativeMacro(session, plan, { now = () => performance.no
       await phase("first-key", async () => { pendingOwned = preset[0]; await typeChar(preset[0]); if (!(await read(pendingOwned)).editorMatchesExpected) throw Error("macro-input-incomplete"); return { characters: 1 }; });
       await clearOwned();
       await phase("typing", async () => {
-        for (let i = 1; i < preset.length; i++) {
+        for (let i = 0; i < preset.length; i++) {
           const draft = await read(pendingOwned);
           if (!draft.editorFocused || draft.route !== owningRoute || !draft.editorMatchesExpected) throw Error("macro-owned-draft-changed");
           pendingOwned += preset[i]; await typeChar(preset[i]); await pause(plan.typingCadenceMs);
@@ -261,28 +280,30 @@ export async function runNativeMacro(session, plan, { now = () => performance.no
     }
     status = "completed"; reason = null;
   } catch (e) {
-    const allowed = new Set(["macro-interrupted", "macro-deadline-exceeded", "macro-layout-or-document-changed", "macro-existing-draft", "macro-active-row-unknown", "macro-pinned-items-unavailable", "macro-route-tracking-unavailable", "macro-route-incomplete", "macro-editor-focus-or-draft", "macro-owned-draft-changed", "macro-input-incomplete", "macro-draft-cleanup-incomplete", "macro-probe-loss", "macro-counter-reset", "macro-scroll-range-insufficient", "macro-dock-top-unreachable", "macro-scroll-incomplete", "macro-scroll-restore-incomplete"]);
+    const allowed = new Set(["macro-interrupted", "macro-deadline-exceeded", "macro-layout-or-document-changed", "macro-existing-draft", "macro-active-row-unknown", "macro-pinned-items-unavailable", "macro-route-tracking-unavailable", "macro-route-incomplete", "macro-editor-focus-or-draft", "macro-owned-draft-changed", "macro-input-incomplete", "macro-input-count-mismatch", "macro-draft-cleanup-incomplete", "macro-probe-loss", "macro-counter-reset", "macro-scroll-range-insufficient", "macro-dock-top-unreachable", "macro-scroll-incomplete", "macro-scroll-restore-incomplete"]);
     reason = allowed.has(e.message) ? e.message : "macro-failed";
   } finally {
+    try { await releaseMouse(); } catch {}
+    await releaseKeys();
     try { await clearOwned(true); } catch { if (pendingOwned) reason = "macro-draft-cleanup-unconfirmed"; }
-    for (const held of heldKeys.splice(0)) {
-      try { await rawSend("Input.dispatchKeyEvent", { type: "keyUp", key: held.keyName, code: held.code, windowsVirtualKeyCode: held.vk, nativeVirtualKeyCode: held.vk, modifiers: held.modifiers }); } catch {}
-    }
+    await releaseKeys();
     try {
       let s = await rawEvaluate(guardExpression(null));
       if (s.route !== 1) {
         const point = await rawEvaluate(`(()=>{const s=window.${SLOT};if(s?.token!==${JSON.stringify(token)})throw Error('macro-owner-lost');return s.restoreInitial();})()`);
         if (point) {
-          await rawSend("Input.dispatchMouseEvent", { type: "mousePressed", button: "left", clickCount: 1, x: point.x, y: point.y });
-          await rawSend("Input.dispatchMouseEvent", { type: "mouseReleased", button: "left", clickCount: 1, x: point.x, y: point.y });
+          await releaseMouse();
+          await click(point, true);
           const limit = now() + 3000;
           do { await pause(100); s = await rawEvaluate(guardExpression(null)); } while (s.route !== 1 && now() < limit);
         }
       }
       routeRestored = s.route === 1;
     } catch {}
+    try { await releaseMouse(); } catch {}
     // Cleanup is allowed even after the action deadline; never operate an unowned probe.
     try { cleanupConfirmed = await rawEvaluate(`(()=>{const p=window.__DREAM_SKIN_INTERACTION_PROBE__,g=window.${SLOT};let ok=true;if(${probeInstalled}){if(p?.collectorToken!==${JSON.stringify(token)})ok=false;else{p.cleanup();delete window.__DREAM_SKIN_INTERACTION_PROBE__;}}if(${guardInstalled}){if(g?.token!==${JSON.stringify(token)})ok=false;else g.cleanup();}return ok;})()`); } catch {}
+    cleanupConfirmed = !!cleanupConfirmed && heldMouse === null && heldKeys.length === 0;
   }
   if (!cleanupConfirmed || pendingOwned || !routeRestored) { status = "invalid"; reason ??= "macro-restoration-unconfirmed"; }
   return { schema: "dream-skin-native-macro/1", source: "cdp-macro", status, reason, plan, observations,

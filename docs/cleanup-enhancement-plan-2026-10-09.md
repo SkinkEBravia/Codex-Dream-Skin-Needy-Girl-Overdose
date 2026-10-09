@@ -15,6 +15,10 @@ identities and records a limited synthetic classifier variability run. The
 keyboard, switching, scroll and appearance fixtures plus a passive Windows
 native recorder. Cleanup and enhancement experiments have not started.
 Controlled native stock/original/pre-clean interaction comparisons remain pending.
+The optional native macro now automates bounded pinned-chat switching and paced
+typing with trusted-event count validation and owned-draft/input cleanup; see
+the [automation handoff](handoff-2026-10-09-native-automation.md). The P1 harness
+is ready to submit while the full native measurement exit condition stays open.
 
 ## What the issue changes
 
